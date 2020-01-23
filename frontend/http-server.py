@@ -24,9 +24,8 @@ DATADIR = os.environ.get(
     os.path.abspath(
         os.path.join(
             os.path.dirname(os.path.realpath(__file__)), "..", "data")))
-HOST = 'localhost'
-
-PORT = 8000
+HOST = os.environ.get("HOST", 'localhost')
+PORT = os.environ.get("PORT", 8080)
 
 LINK_TEMPLATE = f"""
            <a href="/log/%(prname)s"
