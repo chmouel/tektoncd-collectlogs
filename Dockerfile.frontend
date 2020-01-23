@@ -1,0 +1,9 @@
+FROM python:3.7
+
+ADD frontend /src/frontend
+
+RUN mkdir -p /data
+ENV DATADIR /data
+
+WORKDIR /src
+CMD python3 frontend/http-server.py
