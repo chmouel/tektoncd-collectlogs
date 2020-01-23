@@ -1,12 +1,11 @@
 import json
 import os
-import subprocess
 
 import kopf
 import kubernetes.client
 
 DATADIR = os.environ.get('DATADIR', "./data")
-NAMESPACE = os.environ.get('NAMESPACE', 'test')
+NAMESPACE = os.environ.get('NAMESPACE', 'collectlogs')
 kubernetes.config.load_kube_config(config_file=os.environ.get("KUBECONFIG"))
 
 
@@ -15,8 +14,6 @@ kubernetes.config.load_kube_config(config_file=os.environ.get("KUBECONFIG"))
 def condition_change(spec, **kwargs):
     if 'new' in kwargs:
         fpath = os.path.join(DATADIR, kwargs['name'] + ".json")
-        if os.path.exists(fpath):
-            return
         name = spec['pipelineRef']['name']
         reason = kwargs['status']['conditions'][0]['reason']
         msg = '%s has %s' % (name, reason)
@@ -42,11 +39,17 @@ def condition_change(spec, **kwargs):
             group="tekton.dev",
             version="v1alpha1",
             plural='pipelineruns')
-        for p in prinfo['status']['taskRuns']:
-            podname = prinfo['status']['taskRuns'][p]['status']['podName']
-            podlog = apiv1.read_namespaced_pod_log(
-                name=podname, namespace=NAMESPACE)
-            flog = os.path.join(DATADIR,
-                                kwargs['name'] + "-" + podname + ".log")
-            open(flog, 'w').write(podlog)
+        for tr in prinfo['status']['taskRuns']:
+            podname = prinfo['status']['taskRuns'][tr]['status']['podName']
+            for container in prinfo['status']['taskRuns'][tr]['status'][
+                    'steps']:
+                cntlog = apiv1.read_namespaced_pod_log(
+                    pretty=True,
+                    container=container['container'],
+                    name=podname,
+                    namespace=NAMESPACE)
+                flog = os.path.join(
+                    DATADIR, kwargs['name'] + "-" + podname + "-" +
+                    container['container'] + ".log")
+                open(flog, 'w').write(cntlog)
     return

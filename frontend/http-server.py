@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Author: Chmouel Boudjnah <chmouel@chmouel.com>
 #
@@ -13,26 +14,109 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 import glob
+import json
 import os.path
+import re
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-DATADIR = os.environ.get('DATADIR', "./data")
+DATADIR = os.environ.get(
+    'DATADIR',
+    os.path.abspath(
+        os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), "..", "data")))
 HOST = 'localhost'
+
 PORT = 8000
 
-TEMPLATE = """
-           <li> <div class="showp"> %s
-           <div id="%s" class="log"
-           style="visibility: hidden; display: none;"></div>
-           </div> </li>
+LINK_TEMPLATE = f"""
+           <a href="/log/%(prname)s" class="list-group-item list-group-item-%(classname)s">
+           %(prname)s
+           </a>
            """
+
+LOG_POD_TEMPLATE = """
+      <button type="button" class="btn btn-%(classname)s">Taskrun: %(taskrun)s</button>
+      <br/><br/>
+"""
+
+LOG_STEP_TEMPLATE = """
+      <button type="button" class="btn btn-%(classname)s">Step: %(stepname)s</button>
+      <div style="margin-right: 5px; margin-left: 5px; padding: 10px;" class="text-justify shadow-mg p-3 mb-5 bg-white rounded border-%(classname)s shadow border mx-auto">
+        %(log)s
+      </div>
+
+"""
+
+
+def highlight_log(data):
+    ret = re.sub("((ERROR|FAIL).*?)\n",
+                 "<span class='text-white bg-danger'>\\1</span><br/>", data)
+    ret = re.sub("((SUCCESS).*?)\n",
+                 "<span class='text-white bg-success'>\\1</span><br/>", ret)
+    return ret.replace("\n", "<br/>")
 
 
 def build_all_prs():
     ret = ""
     for log in glob.glob(DATADIR + "/*.json"):
-        sansext = os.path.basename(log.replace(".json", ""))
-        ret += TEMPLATE % (sansext, sansext) + "\n"
+        j = json.load(open(log))
+        if j['conditions'][0]['reason'] == 'Succeeded':
+            classname = 'success'
+        elif j['conditions'][0]['reason'] == 'Failed':
+            classname = 'danger'
+        else:
+            print(j['conditions'][0])
+        prname = os.path.basename(log.replace(".json", ""))
+        ret += LINK_TEMPLATE % {
+            'classname': classname,
+            'prname': prname
+        } + "\n"
+    return ret
+
+
+def show_log(prun):
+    fpath = os.path.join(DATADIR, prun + ".json")
+    if not os.path.exists(fpath):
+        return ('%s is not found' % (prun))
+    ret = ""
+    j = json.load(open(fpath))
+
+    for trn in j['taskRuns']:
+        tr = j['taskRuns'][trn]
+        if tr['status']['conditions'][0]['reason'] == 'Succeeded':
+            classname = 'success'
+        elif tr['status']['conditions'][0]['reason'] == 'Failed':
+            classname = 'danger'
+        else:
+            classname = 'info'
+
+        ret += LOG_POD_TEMPLATE % {
+            'classname': classname,
+            # 'log': highlight_log(open(logpath).read()),
+            "prname": prun,
+            'taskrun': trn,
+            'steps': "",
+        } + "\n"
+
+        for container in tr['status']['steps']:
+            logpath = os.path.join(
+                DATADIR, prun + "-" + tr['status']['podName'] + "-" +
+                container['container'] + ".log")
+            if 'terminated' in container and container['terminated'][
+                    'exitCode'] == 0:
+                classname = 'success'
+            elif 'terminated' in container and container['terminated'][
+                    'exitCode'] == 1:
+                classname = 'danger'
+            else:
+                classname = 'warning'
+
+            ret += LOG_STEP_TEMPLATE % {
+                'classname': classname,
+                'log': highlight_log(open(logpath).read()),
+                'stepname': container['name'],
+            } + "\n"
+
     return ret
 
 
@@ -40,24 +124,26 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         ret = ''
         retcode = 200
+        contenttype = "text/html"
+
         if not self.path or self.path == "/":
             ret = open('frontend/index.html').read().replace(
                 "%LI%", build_all_prs())
-        elif self.path.startswith("/log"):
-            fname = self.path.replace("/log/", "")
-            path = os.path.join(DATADIR, fname)
-            if not os.path.exists(path):
-                self.send_response(404)
-                ret = '%s is not found' % (fname)
-                retcode = 404
-            else:
-                ret = open(path).read()
+        elif self.path.startswith("/js"):
+            ret = open('frontend/js/' + self.path.replace("/js", "")).read()
+            contenttype = 'application/javascript'
+        elif self.path.startswith("/css"):
+            ret = open('frontend/css/' + self.path.replace("/css", "")).read()
+            contenttype = 'text/css'
+        elif self.path.startswith("/log") and not self.path.endswith(".log"):
+            ret = open('frontend/log.html').read().replace(
+                "%LOGS%", show_log(self.path.replace("/log/", "")))
         else:
             retcode = 404
             ret = '%s not Found' % (self.path)
 
         self.send_response(retcode)
-        self.send_header("Content-type", "text/html")
+        self.send_header("Content-type", contenttype)
         self.end_headers()
         self.wfile.write(bytes(ret, "utf8"))
         return
