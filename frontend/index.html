@@ -1,0 +1,62 @@
+<html>
+  <head>
+    <title>PipeliensRuns Status</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <style type="text/css">
+     .showp {
+       cursor: pointer;
+       color: blue;
+     }
+     
+     .log {
+       overflow: scroll;
+       text-decoration: normal;
+       color: black;
+       width: 800px;
+       height: 400px;
+       border: 2px solid blue;
+       padding: 10px;
+       margin: 20px;       
+     }
+     
+    </style>
+    
+    <script>
+     $(document).ready(function(){
+         $(".showp").click(function(){
+             pipelinerun=$(this).text().trim();
+             if ( $("#" + pipelinerun).css("visibility") == "hidden"){
+                 $("#" + pipelinerun).css("visibility", "visible");
+                 $("#" + pipelinerun).css("display", "block");
+             } else {
+                 $("#" + pipelinerun).css("visibility", "hidden");
+                 $("#" + pipelinerun).css("display", "none");
+                 return;
+             }
+
+             $.ajax({
+                 url: "/log/" + pipelinerun + ".json",
+                 dataType: "json",
+                 success: function(data, status){
+                     Object.keys(data['taskRuns']).forEach(function(tr, index) {
+                         podlog = "/log/" + pipelinerun + "-" + data['taskRuns'][tr]['status']['podName'] + ".log";                                   /* $("#" + pipelinerun).load(podlog.replace(/\n/g, "<br />"));  */
+                         $.ajax({
+                             url: podlog,
+                             success: function(data, status) {
+                                 data = "<b>Taskrun</b>: " + tr + "<br /><br/>" + data.replace("\n", "<br />")
+                                 $("#" + pipelinerun).html(data);
+                             },
+                         });
+                     });
+                 },
+             });
+         });
+     });
+    </script>
+  </head>
+  <body>
+    <ul>
+      %LI%
+    </ul>
+  </body>
+</html>
