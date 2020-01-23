@@ -6,7 +6,11 @@ import kubernetes.client
 
 DATADIR = os.environ.get('DATADIR', "./data")
 NAMESPACE = os.environ.get('NAMESPACE', 'collectlogs')
-kubernetes.config.load_kube_config(config_file=os.environ.get("KUBECONFIG"))
+if os.environ.get("KUBECONFIG"):
+    kubernetes.config.load_kube_config(
+        config_file=os.environ.get("KUBECONFIG"))
+else:
+    kubernetes.config.load_kube_config()
 
 
 @kopf.on.field(
