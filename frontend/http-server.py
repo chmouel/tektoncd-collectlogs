@@ -29,19 +29,28 @@ HOST = 'localhost'
 PORT = 8000
 
 LINK_TEMPLATE = f"""
-           <a href="/log/%(prname)s" class="list-group-item list-group-item-%(classname)s">
+           <a href="/log/%(prname)s"
+              class="list-group-item list-group-item-%(classname)s">
            %(prname)s
            </a>
            """
 
 LOG_POD_TEMPLATE = """
-      <button type="button" class="btn btn-%(classname)s">Taskrun: %(taskrun)s</button>
-      <br/><br/>
+      <button type="button" class="btn btn-%(classname)s">Taskrun: %(taskrun)s
+      </button>
+      <br/>
+      <div style="margin-right: 5px; margin-left: 5px; padding: 10px;"
+           class="text-justify shadow-lg p-3 lb-5 bg-white rounded
+                  border shadow border mx-auto">
 """
 
 LOG_STEP_TEMPLATE = """
-      <button type="button" class="btn btn-%(classname)s">Step: %(stepname)s</button>
-      <div style="margin-right: 5px; margin-left: 5px; padding: 10px;" class="text-justify shadow-mg p-3 mb-5 bg-white rounded border-%(classname)s shadow border mx-auto">
+      <button type="button" class="btn btn-%(classname)s">
+                Step: %(stepname)s
+      </button>
+      <div style="margin-right: 5px; margin-left: 5px; padding: 10px;"
+           class="text-justify shadow-mg p-3 mb-5 bg-white rounded
+                  border-%(classname)s shadow border mx-auto">
         %(log)s
       </div>
 
@@ -115,8 +124,8 @@ def show_log(prun):
                 'classname': classname,
                 'log': highlight_log(open(logpath).read()),
                 'stepname': container['name'],
-            } + "\n"
-
+            }
+        ret += "</div><br/>\n"
     return ret
 
 
@@ -136,8 +145,11 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             ret = open('frontend/css/' + self.path.replace("/css", "")).read()
             contenttype = 'text/css'
         elif self.path.startswith("/log") and not self.path.endswith(".log"):
-            ret = open('frontend/log.html').read().replace(
-                "%LOGS%", show_log(self.path.replace("/log/", "")))
+            ret = open('frontend/log.html').read()
+            pipelinerun = self.path.replace("/log/", "")
+            ret = ret.replace("%PIPELINE%", pipelinerun)
+            ret = ret.replace("%LOGS%", show_log(pipelinerun))
+
         else:
             retcode = 404
             ret = '%s not Found' % (self.path)
