@@ -10,7 +10,7 @@ if os.environ.get("KUBECONFIG"):
     kubernetes.config.load_kube_config(
         config_file=os.environ.get("KUBECONFIG"))
 else:
-    kubernetes.config.load_kube_config()
+    kubernetes.config.load_incluster_config()
 
 
 @kopf.on.field(
