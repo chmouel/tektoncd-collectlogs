@@ -35,9 +35,9 @@ items:
           volumeMounts:
           - mountPath: /data
             name: data
-        - image: quay.io/openshift/origin-cli:latest
-          name: cli
-          command: ['sleep', 'infinity']
+#        - image: quay.io/openshift/origin-cli:latest
+#          name: cli
+#          command: ['sleep', 'infinity']
         volumes:
         - emptyDir: {}
           name: data
