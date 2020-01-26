@@ -1,0 +1,33 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+
+    <title>PipelineRun Dashboard!</title>
+    <meta name="description" content="PipelineRun Dashboard viewer status">
+    <meta name="author" content="Chmouel Boudjah">
+
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <script src="js/bootstrap.min.js"></script>
+
+  </head>
+
+  <body>
+    <div class="container">
+      <h2>PipelineRuns status</h2>
+      <div class="list-group">
+
+        {% for pr in prs %}
+           <a href="/log/{{ pr.prname }}"
+              class="list-group-item list-group-item-{{ pr.classname }}">
+              {{ pr.prname }}
+              <br/>
+              <small>{{ pr.finishtime.strftime('%Y-%m-%d %H:%M:%S') }}</small>
+           </a>
+        {% endfor %}
+        
+      </div>
+    </div>
+  </body>
+</html
