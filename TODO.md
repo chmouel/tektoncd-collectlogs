@@ -1,2 +1,2 @@
-* Step names separations in log view
-* Fix when multiple tasknames log collection
+* Add line number links to logs
+
