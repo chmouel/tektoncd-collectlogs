@@ -100,11 +100,11 @@ def build_pr_log(pr):
     for trn in j['taskRuns']:
         tr = j['taskRuns'][trn]
         if tr['status']['conditions'][0]['reason'] == 'Succeeded':
-            classname = 'success'
+            emoji = '✅'
         elif tr['status']['conditions'][0]['reason'] == 'Failed':
-            classname = 'danger'
+            emoji = '❌'
         else:
-            classname = 'info'
+            emoji = '❓'
 
         if 'completionTime' in tr['status']:
             time = tr['status']['completionTime']
@@ -116,8 +116,8 @@ def build_pr_log(pr):
         ret.append({
             'time':
             time,
-            'classname':
-            classname,
+            'emoji':
+            emoji,
             'taskrun':
             trn,
             'steps':

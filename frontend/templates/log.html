@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+
+    <title>PipelineRun: {{pr}}</title>
+    <meta name="description" content="Showing PipelienRun stesp and failure">
+    <meta name="author" content="Chmouel Boudjah">
+
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <script src="/js/bootstrap.min.js"></script>
+
+  </head>
+
+  
+  <body>
+    
+    <div class="container-fluid">
+      <div class="text-center">
+  	    <button type="button" class="btn btn-primary">
+          Pipeline {{pr}}
+        </button>
+      </div>
+      <br/>
+
+      {% for tr in prlog %}
+
+        <button type="button" style='margin-top: 20px;padding: 5px;' class="btn-dark"><b>{{ tr.emoji }} Taskrun</b>: {{tr.taskrun}}
+        </button>
+        
+        <br/>
+        <div style="margin-right: 5px; margin-left: 5px; padding: 10px;"
+             class="text-justify shadow-lg p-3 lb-5 bg-white rounded
+             border shadow border mx-auto">
+
+          {% for step in tr.steps|reverse %}
+            <button type="button" class="btn btn-{{step.classname}}">
+              Step: {{step.stepname}}
+            </button>
+            <div style="margin-right: 5px; margin-left: 5px; padding: 10px;"
+                 class="text-justify shadow-mg p-3 mb-5 bg-white rounded
+                 border-{{ step.classname }} shadow border mx-auto">
+                 {% autoescape false %}
+                   {{ step.log }}
+                 {% endautoescape %}
+            </div>
+            
+          {% endfor %}
+          
+        </div>
+      {% endfor %}
+      
+    </div>
+    
+  </body>
+</html
