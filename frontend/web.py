@@ -31,9 +31,11 @@ app = flask.Flask(__name__, static_url_path='')
 
 def highlight_log(data):
     ret = re.sub("((ERROR|FAIL).*?)\n",
-                 "<span class='text-white bg-danger'>\\1</span><br/>", data)
+                 "<span class='text-white bg-danger'>\\1</span><br/>", data,
+                 re.IGNORECASE)
     ret = re.sub("((SUCCESS).*?)\n",
-                 "<span class='text-white bg-success'>\\1</span><br/>", ret)
+                 "<span class='text-white bg-success'>\\1</span><br/>", ret,
+                 re.IGNORECASE)
     return ret.replace("\n", "<br/>")
 
 

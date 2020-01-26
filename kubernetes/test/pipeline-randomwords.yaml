@@ -2,7 +2,7 @@
 apiVersion: tekton.dev/v1alpha1
 kind: Task
 metadata:
-  name: baconipsum
+  name: baconipsum-1
 spec:
   steps:
     - name: baconipsum
@@ -10,6 +10,35 @@ spec:
       script: |
         #!/bin/sh -e
         curl -s 'https://baconipsum.com/api/?type=meat-and-filler&format=html'
+        echo "SUCCESS: GOT IT!"
+
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: baconipsum-2
+spec:
+  steps:
+    - name: baconipsum
+      image: curlimages/curl
+      script: |
+        #!/bin/sh -e
+        curl -s 'https://baconipsum.com/api/?type=meat-and-filler&format=html'
+        echo "SUCCESS: YAYA"
+
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: baconipsum-3
+spec:
+  steps:
+    - name: baconipsum
+      image: curlimages/curl
+      script: |
+        #!/bin/sh -e
+        curl -s 'https://baconipsum.com/api/?type=meat-and-filler&format=html'
+        echo "SUCCESS: ANOTER YAY"
 
 ---
 apiVersion: tekton.dev/v1alpha1
@@ -18,10 +47,19 @@ metadata:
   name: pipeline-randomwords
 spec:
   tasks:
-  - name: baconipsum
+  - name: baconipsum-1
     taskRef:
       name: baconipsum
 
+  - name: baconipsum-2
+    taskRef:
+      name: baconipsum
+    runAfter: [baconipsum-1]
+
+  - name: baconipsum-3
+    taskRef:
+      name: baconipsum
+    runAfter: [baconipsum-2]
 # ---
 # apiVersion: tekton.dev/v1alpha1
 # kind: PipelineRun

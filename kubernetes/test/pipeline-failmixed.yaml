@@ -10,7 +10,7 @@ spec:
       script: |
         #!/bin/sh -e
         curl -s 'https://baconipsum.com/api/?type=meat-and-filler&format=html'
-
+        echo "Success getting baconipsum, this should be highlight in GREEN!"
 ---
 apiVersion: tekton.dev/v1alpha1
 kind: Task
@@ -22,7 +22,7 @@ spec:
       image: curlimages/curl
       script: |
         #!/bin/sh -e
-        echo "ERROR: Running this!!!"
+        echo "ERROR: Running this!!! The wonderful log viewer should highlight this line in RED"
         echo "Sorry about this this failed on purpose"
         exit 1
 ---
