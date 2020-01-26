@@ -100,10 +100,8 @@ def show_log(prun):
 
         ret += LOG_POD_TEMPLATE % {
             'classname': classname,
-            # 'log': highlight_log(open(logpath).read()),
             "prname": prun,
             'taskrun': trn,
-            'steps': "",
         } + "\n"
 
         for container in tr['status']['steps']:

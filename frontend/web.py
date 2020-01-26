@@ -15,9 +15,9 @@
 import glob
 import json
 import os
+import re
 
 import flask
-
 from dateutil import parser as dtparse
 
 DATADIR = os.environ.get(
@@ -27,6 +27,14 @@ DATADIR = os.environ.get(
             os.path.dirname(os.path.realpath(__file__)), "..", "data")))
 
 app = flask.Flask(__name__, static_url_path='')
+
+
+def highlight_log(data):
+    ret = re.sub("((ERROR|FAIL).*?)\n",
+                 "<span class='text-white bg-danger'>\\1</span><br/>", data)
+    ret = re.sub("((SUCCESS).*?)\n",
+                 "<span class='text-white bg-success'>\\1</span><br/>", ret)
+    return ret.replace("\n", "<br/>")
 
 
 def build_pipelineruns_status():
@@ -49,13 +57,84 @@ def build_pipelineruns_status():
     return sorted(ret, key=lambda p: p['finishtime'])
 
 
+def steps_status(prun, podName, steps):
+    ret = []
+    for container in steps:
+        logpath = os.path.join(
+            DATADIR,
+            prun + "-" + podName + "-" + container['container'] + ".log")
+        # TODO: handle erorr not found
+        if 'terminated' in container and container['terminated'][
+                'exitCode'] == 0:
+            classname = 'success'
+            starttime = dtparse.parse(container['terminated']['startedAt'])
+        elif 'terminated' in container and container['terminated'][
+                'exitCode'] == 1:
+            classname = 'danger'
+            starttime = dtparse.parse(container['terminated']['startedAt'])
+        elif 'running' in container:
+            starttime = dtparse.parse(container['running']['startedAt'])
+            classname = 'primary'
+        else:
+            classname = 'warning'
+            starttime = None
+
+        # TODO: step time
+        ret.append({
+            'time': starttime,
+            'classname': classname,
+            'log': highlight_log(open(logpath).read()),
+            'stepname': container['name'],
+        })
+
+    return sorted(ret, key=lambda p: p['time'])
+
+
+def build_pr_log(pr):
+    fpath = os.path.join(DATADIR, pr + ".json")
+    if not os.path.exists(fpath):
+        return ('%s is not found' % (pr))
+    ret = []
+    j = json.load(open(fpath))
+
+    for trn in j['taskRuns']:
+        tr = j['taskRuns'][trn]
+        if tr['status']['conditions'][0]['reason'] == 'Succeeded':
+            classname = 'success'
+        elif tr['status']['conditions'][0]['reason'] == 'Failed':
+            classname = 'danger'
+        else:
+            classname = 'info'
+
+        if 'completionTime' in tr['status']:
+            time = tr['status']['completionTime']
+        elif 'startTime' in tr['status']:
+            time = tr['status']['startTime']
+        else:
+            time = None
+
+        ret.append({
+            'time':
+            time,
+            'classname':
+            classname,
+            'taskrun':
+            trn,
+            'steps':
+            steps_status(pr, tr['status']['podName'], tr['status']['steps']),
+        })
+
+    return sorted(ret, key=lambda p: p['time'], reverse=True)
+
+
+@app.route('/log/<pr>')
+def log(pr):
+    return flask.render_template('log.html', pr=pr, prlog=build_pr_log(pr))
+
+
 @app.route('/')
 def index():
-    prs = build_pipelineruns_status()
-    from pprint import pprint as p
-    p(prs)
-
-    return flask.render_template('index.html', prs=prs)
+    return flask.render_template('index.html', prs=build_pipelineruns_status())
 
 
 if __name__ == '__main__':
