@@ -74,7 +74,7 @@ def steps_status(prun, podName, steps):
             starttime = dtparse.parse(container['terminated']['startedAt'])
         elif 'running' in container:
             starttime = dtparse.parse(container['running']['startedAt'])
-            classname = 'primary'
+            classname = 'secondary'
         else:
             classname = 'warning'
             starttime = None
