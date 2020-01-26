@@ -1,6 +1,6 @@
 REPO=quay.io/chmouel
 
-all: build push
+all: build push redeploy
 
 build:
 	docker build -t $(REPO)/collectlogs-operator -f Dockerfile.operator .
@@ -9,3 +9,6 @@ build:
 push:
 	docker push $(REPO)/collectlogs-operator
 	docker push $(REPO)/collectlogs-frontend
+
+redeploy:
+	kubectl delete pod -l app=collectlogs 2>/dev/null || true
