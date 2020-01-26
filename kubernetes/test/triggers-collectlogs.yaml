@@ -1,0 +1,116 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+  name: collectlog-triggertemplate
+spec:
+  params:
+    - name: namespace
+      description: The namespace to create the resources
+    - name: github_user
+      description: Pull Request GitHUB User
+    - name: github_repo
+      description: Pull Request GitHUB Repo
+    - name: github_pr_number
+      description: Pull Request PR Number
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1alpha1
+      kind: PipelineRun
+      metadata:
+        labels:
+          github_repo: "$(params.github_repo)"
+          github_user: "$(params.github_user)"
+          github_pr_number: "$(params.github_pr_number)"
+        name: pipelinerun-randomwords-$(uid)
+        namespace: $(params.namespace)
+      spec:
+        pipelineRef:
+          name: pipeline-randomwords
+
+---
+apiVersion: tekton.dev/v1alpha1
+kind: TriggerBinding
+metadata:
+  name: collectlog-pipelinebinding
+spec:
+  params:
+    - name: namespace
+      value: collectlogs
+    - name: github_user
+      value: $(body.pull_request.user.login)
+    - name: github_repo
+      value: $(body.pull_request.head.repo.name)
+    - name: github_pr_number
+      value: $(body.number)
+
+---
+apiVersion: tekton.dev/v1alpha1
+kind: EventListener
+metadata:
+  name: collectlogs
+spec:
+  serviceAccountName: tekton-triggers-sa
+  triggers:
+    - name: pullreq-pipelinebindings
+      interceptors:
+      - cel:
+          filter: "header.match('X-GitHub-Event', 'pull_request')"
+      bindings:
+      - name: collectlog-pipelinebinding
+      template:
+        name: collectlog-triggertemplate
+
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: el-collectlogs
+spec:
+  to:
+    kind: Service
+    name: el-collectlogs
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: tekton-triggers-role
+rules:
+# Permissions for every EventListener deployment to function
+- apiGroups: ["tekton.dev"]
+  resources: ["eventlisteners", "triggerbindings", "triggertemplates", "tasks", "taskruns"]
+  verbs: ["get"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch"]
+# Permissions to create resources in associated TriggerTemplates
+- apiGroups: ["tekton.dev"]
+  resources: ["pipelineruns", "pipelineresources", "taskruns"]
+  verbs: ["create"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tekton-triggers-binding
+subjects:
+- kind: ServiceAccount
+  name: tekton-triggers-sa
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: tekton-triggers-role
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tekton-triggers-sa
+secrets:
+  - name: github-secret
+
+
+# oc create secret generic github-secret --from-literal secretToken="$(git config --get github.oauth-token)"

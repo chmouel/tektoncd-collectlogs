@@ -1,0 +1,75 @@
+---
+apiVersion: v1
+kind: List
+items:
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    name: collectlogs
+    labels:
+      app: collectlogs
+  spec:
+    selector:
+      matchLabels:
+        app: collectlogs
+    template:
+      metadata:
+        labels:
+          app: collectlogs
+      spec:
+        serviceAccountName: collectlogs
+        containers:
+        - image: quay.io/chmouel/collectlogs-operator
+          name: operator
+          env:
+            - name: DATA
+              value: "/data"
+          volumeMounts:
+          - mountPath: /data
+            name: data
+        - image: quay.io/chmouel/collectlogs-frontend
+          name: frontend
+          env:
+            - name: DATA
+              value: "/data"
+          volumeMounts:
+          - mountPath: /data
+            name: data
+        - image: quay.io/openshift/origin-cli:latest
+          name: cli
+          command: ['sleep', 'infinity']
+        volumes:
+        - emptyDir: {}
+          name: data
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: collectlogs
+    name: collectlogs
+  spec:
+    ports:
+    - name: 8080-tcp
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: collectlogs
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: collectlogs
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-admin-collectlogs
+subjects:
+  - kind: ServiceAccount
+    name: collectlogs
+    namespace: collectlogs
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
