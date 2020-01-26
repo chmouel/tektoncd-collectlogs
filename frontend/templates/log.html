@@ -25,26 +25,27 @@
 
       {% for tr in prlog %}
 
-        <button type="button" style='margin-top: 20px;padding: 5px;' class="btn-dark"><b>{{ tr.emoji }} Taskrun</b>: {{tr.taskrun}}
-        </button>
+        <a style="padding: 10px;" class="btn btn-info" id="{{tr.taskrun}}" href="#{{tr.taskrun}}">
+          <b>{{ tr.emoji }} Taskrun</b>: {{tr.taskrun}}
+        </a>
         
         <br/>
         <div style="margin-right: 5px; margin-left: 5px; padding: 10px;"
              class="text-justify shadow-lg p-3 lb-5 bg-white rounded
              border shadow border mx-auto">
 
-          {% for step in tr.steps|reverse %}
-            <button type="button" class="btn btn-{{step.classname}}">
-              Step: {{step.stepname}}
-            </button>
-            <div style="margin-right: 5px; margin-left: 5px; padding: 10px;"
-                 class="text-justify shadow-mg p-3 mb-5 bg-white rounded
-                 border-{{ step.classname }} shadow border mx-auto">
-                 {% autoescape false %}
-                   {{ step.log }}
-                 {% endautoescape %}
-            </div>
-            
+          {% for step in tr.steps %}
+            <a id="{{tr.taskrun}}-{{step.stepname}}"
+               href="#{{tr.taskrun}}-{{step.stepname}}" class="btn btn-{{step.classname}}">
+                {{step.stepname}}
+              </a>
+              <div style="margin-right: 5px; margin-left: 5px; padding: 10px;"
+                   class="text-justify shadow-mg p-3 mb-5 bg-white rounded
+                   border-{{ step.classname }} shadow border mx-auto">
+                   {% autoescape false %}
+                     {{ step.log }}
+                   {% endautoescape %}
+              </div>
           {% endfor %}
           
         </div>

@@ -124,7 +124,7 @@ def build_pr_log(pr):
             steps_status(pr, tr['status']['podName'], tr['status']['steps']),
         })
 
-    return sorted(ret, key=lambda p: p['time'], reverse=True)
+    return sorted(ret, key=lambda p: p['time'])
 
 
 @app.route('/log/<pr>')
