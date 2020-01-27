@@ -52,11 +52,13 @@ def build_pipelineruns_status():
             classname = 'info'
         prname = os.path.basename(log.replace(".json", ""))
         ret.append({
+            'namespace': j['namespace'],
+            'pipelinename': j['pipelineName'],
             'finishtime': dtparse.parse(j['completionTime']),
             'classname': classname,
             'prname': prname
         })
-    return sorted(ret, key=lambda p: p['finishtime'])
+    return sorted(ret, key=lambda p: p['finishtime'], reverse=True)
 
 
 def steps_status(prun, podName, steps):

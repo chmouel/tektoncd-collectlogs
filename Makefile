@@ -1,4 +1,5 @@
 REPO=quay.io/chmouel
+NAMESPACE=$(shell kubectl config view --minify --output 'jsonpath={..namespace}')
 
 all: build push redeploy
 
@@ -10,5 +11,7 @@ push:
 	docker push $(REPO)/collectlogs-operator
 	docker push $(REPO)/collectlogs-frontend
 
+redeploy: SHELL:=/bin/bash   # HERE: this is setting the shell for b only
 redeploy:
-	kubectl delete pod -l app=collectlogs 2>/dev/null || true
+	@kubectl delete -f <(sed 's/%NAMESPACE%/$(NAMESPACE)/' kubernetes/deployment.yaml) 2>/dev/null || true
+	@kubectl create -f <(sed 's/%NAMESPACE%/$(NAMESPACE)/' kubernetes/deployment.yaml) 2>/dev/null || true

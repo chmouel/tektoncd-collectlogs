@@ -32,13 +32,21 @@ def condition_change(spec, **kwargs):
                         taskName, tr['status']['conditions'][0]['message'])
             treason += ']'
             msg += treason
+        jeez = dict(kwargs['status'])
+        jeez['namespace'] = kwargs['namespace']
+        jeez['pipelineName'] = kwargs['body']['spec']['pipelineRef']['name']
+        # import pprint
+        # with open("/tmp/debug.txt", 'w') as fp:
+        #     fp.write(pprint.pformat(kwargs, indent=2))
+        apicustom = kubernetes.client.CustomObjectsApi()
+
         with open(fpath, 'w') as fp:
-            fp.write(json.dumps(dict(kwargs['status'])))
+            fp.write(json.dumps(jeez))
         apicustom = kubernetes.client.CustomObjectsApi()
         apiv1 = kubernetes.client.CoreV1Api()
 
         prinfo = apicustom.get_namespaced_custom_object(
-            namespace=NAMESPACE,
+            namespace=kwargs['namespace'],
             name=kwargs['name'],
             group="tekton.dev",
             version="v1alpha1",
@@ -51,7 +59,7 @@ def condition_change(spec, **kwargs):
                     pretty=True,
                     container=container['container'],
                     name=podname,
-                    namespace=NAMESPACE)
+                    namespace=kwargs['namespace'])
                 flog = os.path.join(
                     DATADIR, kwargs['name'] + "-" + podname + "-" +
                     container['container'] + ".log")

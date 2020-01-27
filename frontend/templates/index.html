@@ -13,24 +13,47 @@
   </head>
 
   <body>
-    <div class="container">
-      <p class="text-center">
-        <button style="padding: 10px" class="btn-info">PipelineRuns status</button>
-      </p>        
-      <div class="list-group">
-
-        {% for pr in prs %}
-        
-        <p class="text-justify">
+    <p class="text-center">
+      <img src="{{ url_for('static', filename='img/tekton.png')}}" width="120" height="80" class="img-fluid rounded" alt="TektonCD Logo">
+      <br/>
+      <button style="padding: 10px" class="btn-dark">PipelineRuns Status</button>
+    </p>        
+    
+    <div  class="container-fluid">
+      
+      {% for pr in prs %}
+      <div class="row">
+        <div class="col-md-3"></div>        
+        <div class="col-md-6 text-left">        
+          <small class="text-secondary">
+            <b>Pipeline:</b>
+            {{ pr.pipelinename }}
+            |
+            <b>Namespace:</b>
+            {{ pr.namespace }}
+            |
+            <b>Date:</b>
+            {{ pr.finishtime.strftime('%Y-%m-%d %H:%M:%S') }}
+          </small>
+        </div>
+        <div class="col-md-3"></div>        
+      </div>
+      
+      <div class="row">
+        <div class="col-md-3"></div>
+        <div class="col-md-6 text-center">
           <a href="/log/{{ pr.prname }}"
             class="list-group-item list-group-item-{{ pr.classname }}">
             {{ pr.prname }}
-            <!-- <small>{{ pr.finishtime.strftime('%Y-%m-%d %H:%M:%S') }}</small> -->
           </a>
-        </p>
-        {% endfor %}
-        
+        </div>
+        <div class="col-md-3">
+        </div>
       </div>
+
+      <br/>
+      {% endfor %}
+        
     </div>
   </body>
 </html
