@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
 set -eu
 
-exec python3 frontend/http-server.py
+export FLASK_ENV=development
+export FLASK_APP=web.py
+
+cd frontend/
+flask run
