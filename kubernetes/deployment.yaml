@@ -19,7 +19,7 @@ items:
       spec:
         serviceAccountName: collectlogs
         containers:
-        - image: quay.io/chmouel/collectlogs-operator
+        - image: quay.io/chmouel/collectlogs-operator:latest
           name: operator
           env:
             - name: DATA
@@ -27,7 +27,7 @@ items:
           volumeMounts:
           - mountPath: /data
             name: data
-        - image: quay.io/chmouel/collectlogs-frontend
+        - image: quay.io/chmouel/collectlogs-frontend:latest
           name: frontend
           env:
             - name: DATA
