@@ -49,16 +49,16 @@ spec:
   tasks:
   - name: baconipsum-1
     taskRef:
-      name: baconipsum
+      name: baconipsum-1
 
   - name: baconipsum-2
     taskRef:
-      name: baconipsum
+      name: baconipsum-2
     runAfter: [baconipsum-1]
 
   - name: baconipsum-3
     taskRef:
-      name: baconipsum
+      name: baconipsum-3
     runAfter: [baconipsum-2]
 # ---
 # apiVersion: tekton.dev/v1alpha1
