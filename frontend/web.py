@@ -39,7 +39,7 @@ def highlight_log(data):
                  re.IGNORECASE)
     ret = re.sub(
         'password[:=]([ ]*)?([^"\' \t\n]*)',
-        "password: <span class='text-white bg-muted'>XXXXXX</span><br/>", ret,
+        "password: <span class='bg-dark text-dark'>XXXXXXXXX</span><br/>", ret,
         re.IGNORECASE)
     return ret.replace("\n", "<br/>")
 
