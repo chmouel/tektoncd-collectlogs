@@ -2,10 +2,12 @@ FROM python:3.7
 
 ADD operator /src/
 
+ADD run-operator.sh /usr/local/bin
+
 RUN mkdir -p /data
 
 ENV DATADIR /data
 
 RUN pip install kopf kubernetes
 
-CMD kopf run /src/collectlogs.py 
+CMD /usr/local/bin/run-operator.sh

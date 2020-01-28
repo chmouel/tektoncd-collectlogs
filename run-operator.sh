@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
 set -eu
 
-exec kopf run ./operator/collectlogs.py
+[[ -n ${TARGET_NAMESPACE} ]] && args="-n ${TARGET_NAMESPACE}"
+
+exec kopf run ${args} ./operator/collectlogs.py
