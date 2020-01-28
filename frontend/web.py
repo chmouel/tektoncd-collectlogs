@@ -109,11 +109,14 @@ def build_pr_log(pr):
     for trn in j['taskRuns']:
         tr = j['taskRuns'][trn]
         if tr['status']['conditions'][0]['reason'] == 'Succeeded':
-            emoji = '✅'
+            emoji = '🤙'
         elif tr['status']['conditions'][0]['reason'] == 'Failed':
-            emoji = '❌'
+            emoji = '🚫'
+        elif j['conditions'][0]['status'] == "False" and tr['status'][
+                'conditions'][0]['reason'] == 'Running':
+            emoji = '🤷'
         else:
-            emoji = '❓'
+            emoji = '🤔'
 
         if 'completionTime' in tr['status']:
             time = tr['status']['completionTime']
