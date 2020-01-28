@@ -22,8 +22,9 @@ spec:
       image: curlimages/curl
       script: |
         #!/bin/sh -e
-        echo "ERROR: Running this!!! The wonderful log viewer should highlight this line in RED"
-        echo "Sorry about this this failed on purpose"
+        echo "ERROR: We are testing if errors are getting in RED"
+        echo "Here is your password=foo but don't worry this should have been censored'"
+        echo "SUCESS: what did I hear I heard the sound fo success!!!"
         exit 1
 ---
 apiVersion: tekton.dev/v1alpha1

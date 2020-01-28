@@ -31,16 +31,15 @@ app = flask.Flask(__name__, static_url_path='')
 
 # TODO: Configurable
 def highlight_log(data):
-    ret = re.sub("((ERROR|FAIL).*?)\n",
-                 "<span class='text-white bg-danger'>\\1</span><br/>", data,
-                 re.IGNORECASE)
-    ret = re.sub("((SUCCESS).*?)\n",
-                 "<span class='text-white bg-success'>\\1</span><br/>", ret,
-                 re.IGNORECASE)
-    ret = re.sub(
-        'password[:=]([ ]*)?([^"\' \t\n]*)',
-        "password: <span class='bg-dark text-dark'>XXXXXXXXX</span><br/>", ret,
-        re.IGNORECASE)
+    match = re.compile(r"((ERROR|FAILURE|FAILED))", re.MULTILINE)
+    ret = match.sub("<span class='text-white bg-danger'>\\1</span>", data)
+    match = re.compile(r"((SUCCESS))", re.MULTILINE)
+    ret = match.sub("<span class='text-white bg-success'>\\1</span>", ret)
+
+    match = re.compile(r'password\s*?[:=]([ ]*)?([^"\' \t\n]*)', re.MULTILINE)
+    ret = match.sub(
+        "password: <span class='bg-dark text-dark'>XXXXXXXXX</span>", ret)
+
     return ret.replace("\n", "<br/>")
 
 
