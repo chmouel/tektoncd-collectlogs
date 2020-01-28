@@ -29,6 +29,7 @@ DATADIR = os.environ.get(
 app = flask.Flask(__name__, static_url_path='')
 
 
+# TODO: Configurable
 def highlight_log(data):
     ret = re.sub("((ERROR|FAIL).*?)\n",
                  "<span class='text-white bg-danger'>\\1</span><br/>", data,
@@ -36,6 +37,10 @@ def highlight_log(data):
     ret = re.sub("((SUCCESS).*?)\n",
                  "<span class='text-white bg-success'>\\1</span><br/>", ret,
                  re.IGNORECASE)
+    ret = re.sub(
+        'password[:=]([ ]*)?([^"\' \t\n]*)',
+        "password: <span class='text-white bg-muted'>XXXXXX</span><br/>", ret,
+        re.IGNORECASE)
     return ret.replace("\n", "<br/>")
 
 
