@@ -83,11 +83,16 @@ def steps_status(prun, podName, steps):
             classname = 'warning'
             starttime = None
 
+        if not os.path.exists(logpath):
+            logt = "LOG NOT FOUND"
+        else:
+            logt = highlight_log(open(logpath).read())
+
         # TODO: step time
         ret.append({
             'time': starttime,
             'classname': classname,
-            'log': highlight_log(open(logpath).read()),
+            'log': logt,
             'stepname': container['name'],
         })
 
