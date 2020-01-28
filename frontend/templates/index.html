@@ -3,7 +3,8 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
     <title>PipelineRun Dashboard!</title>
     <meta name="description" content="PipelineRun Dashboard viewer status">
     <meta name="author" content="Chmouel Boudjah">
@@ -14,7 +15,9 @@
 
   <body>
     <p class="text-center">
-      <img src="{{ url_for('static', filename='img/tekton.png')}}" width="120" height="80" class="img-fluid rounded" alt="TektonCD Logo">
+      <a href="/">
+        <img src="{{ url_for('static', filename='img/tekton.png')}}" width="120" height="80" class="img-fluid rounded" alt="TektonCD Logo">
+      </a>
       <br/>
       <button style="padding: 10px" class="btn-primary">PipelineRuns Status</button>
     </p>        
