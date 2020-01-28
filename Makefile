@@ -1,5 +1,6 @@
 REPO=quay.io/chmouel
-NAMESPACE=$(shell kubectl config view --minify --output 'jsonpath={..namespace}')
+# NAMESPACE=$(shell kubectl config view --minify --output 'jsonpath={..namespace}')
+NAMESPACE := tekton-pipelines
 
 all: build push redeploy
 
