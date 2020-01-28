@@ -16,16 +16,19 @@
   <body>
     
     <div class="container-fluid">
+      
       <div class="text-center">
-  	    <button type="button" class="btn btn-primary">
-          Pipeline {{pr}}
-        </button>
+        <a href="/">
+          <img src="{{ url_for('static', filename='img/tekton.png')}}" width="120" height="80" class="img-fluid rounded" alt="TektonCD Logo">
+        </a>
+        <br/>
+        <button style="padding: 10px" class="btn-primary">PipelineRun: {{pr}}</button>
       </div>
       <br/>
 
       {% for tr in prlog %}
 
-        <a style="margin-top: 5px;border-left: solid 0.1px;border-right: solid 0.1px; border-top: solid 0.1px;padding: 10px;" class="btn btn-light" id="{{tr.taskrun}}" href="#{{tr.taskrun}}">
+        <a style="padding-top: 10px;" class="btn" id="{{tr.taskrun}}" href="#{{tr.taskrun}}">
           <b>{{ tr.emoji }} Taskrun</b>: {{tr.taskrun}}
         </a>
         
