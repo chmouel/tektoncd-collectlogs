@@ -8,4 +8,4 @@ ENV DATADIR /data
 
 RUN pip install kopf kubernetes
 
-CMD kopf run /src/collectlogs.py --verbose
+CMD kopf run /src/collectlogs.py 
