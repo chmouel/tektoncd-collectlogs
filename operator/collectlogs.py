@@ -18,6 +18,14 @@ else:
 def condition_change(spec, **kwargs):
     if 'new' in kwargs:
         fpath = os.path.join(DATADIR, kwargs['name'] + ".json")
+        if os.path.exists(fpath):
+            counter = 0
+            while True:
+                counter += 1
+                fpath = os.path.join(DATADIR,
+                                     "%s-%d.json" % (kwargs['name'], counter))
+                if not os.path.exists(fpath):
+                    break
         name = spec['pipelineRef']['name']
         reason = kwargs['status']['conditions'][0]['reason']
         msg = '%s has %s' % (name, reason)
@@ -35,6 +43,7 @@ def condition_change(spec, **kwargs):
         jeez = dict(kwargs['status'])
         jeez['namespace'] = kwargs['namespace']
         jeez['pipelineName'] = kwargs['body']['spec']['pipelineRef']['name']
+        jeez['pipelinerunName'] = kwargs['name']
         # import pprint
         # with open("/tmp/debug.txt", 'w') as fp:
         #     fp.write(pprint.pformat(kwargs, indent=2))

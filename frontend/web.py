@@ -105,7 +105,7 @@ def build_pr_log(pr):
         return ('%s is not found' % (pr))
     ret = []
     j = json.load(open(fpath))
-
+    pr = j['pipelinerunName']
     for trn in j['taskRuns']:
         tr = j['taskRuns'][trn]
         if tr['status']['conditions'][0]['reason'] == 'Succeeded':
