@@ -9,6 +9,7 @@ spec:
       image: curlimages/curl
       script: |
         #!/bin/sh -e
+        echo "STARTING!"
         curl -s 'https://baconipsum.com/api/?type=meat-and-filler&format=html'
         echo "Success getting baconipsum, this should be highlight in GREEN!"
 ---
@@ -24,7 +25,7 @@ spec:
         #!/bin/sh -e
         echo "ERROR: We are testing if errors are getting in RED"
         echo "Here is your password=foo but don't worry this should have been censored'"
-        echo "SUCESS: what did I hear I heard the sound fo success!!!"
+        echo "SUCCESS: what did I hear I heard the sound fo success!!!"
         exit 1
 ---
 apiVersion: tekton.dev/v1alpha1

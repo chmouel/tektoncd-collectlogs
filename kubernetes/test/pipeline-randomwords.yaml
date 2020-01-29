@@ -11,6 +11,23 @@ spec:
         #!/bin/sh -e
         curl -s 'https://baconipsum.com/api/?type=meat-and-filler&format=html'
         echo "SUCCESS: GOT IT!"
+    - name: havanagila
+      image: curlimages/curl
+      script: |
+        #!/bin/sh -e
+        echo STEPS2
+
+    - name: ousmechim
+      image: curlimages/curl
+      script: |
+        #!/bin/sh -e
+        echo STEPS3
+
+    - name: venesameach
+      image: curlimages/curl
+      script: |
+        #!/bin/sh -e
+        echo STEPS4
 
 ---
 apiVersion: tekton.dev/v1alpha1

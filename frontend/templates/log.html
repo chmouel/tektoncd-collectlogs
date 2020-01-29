@@ -29,14 +29,15 @@
 
       {% for tr in prlog %}
 
-        <a style="padding-top: 10px;" class="btn" id="{{tr.taskrun}}" href="#{{tr.taskrun}}">
-          <b>{{ tr.emoji }} Taskrun</b>: {{tr.taskrun}}
-        </a>
+      <div style="margin-right: 5px; margin-left: 5px; padding: 10px;"
+        class="text-justify bg-white rounded border mx-auto">
         
-        <br/>
-        <div style="margin-right: 5px; margin-left: 5px; padding: 10px;"
-             class="text-justify bg-white rounded border mx-auto">
-
+        <div style="width:100%" class="text-center">
+          <a class="btn" id="{{tr.taskrun}}" href="#{{tr.taskrun}}">
+            <b>{{ tr.emoji }} Taskrun</b>: {{tr.taskrun}}
+          </a>
+        </div>
+        
           {% for step in tr.steps %}
             <a id="{{tr.taskrun}}-{{step.stepname}}"
                href="#{{tr.taskrun}}-{{step.stepname}}" class="btn btn-{{step.classname}}">
@@ -49,11 +50,13 @@
                      {{ step.log }}
                    {% endautoescape %}
               </div>
+          <br/>
           {% endfor %}
-          
-        </div>
-      {% endfor %}
+      </div>
       
+      <br/>
+      {% endfor %}
+        
     </div>
     
   </body>
