@@ -35,8 +35,7 @@
         
         <br/>
         <div style="margin-right: 5px; margin-left: 5px; padding: 10px;"
-             class="text-justify shadow-lg p-3 lb-5 bg-white rounded
-             border shadow border mx-auto">
+             class="text-justify bg-white rounded border mx-auto">
 
           {% for step in tr.steps %}
             <a id="{{tr.taskrun}}-{{step.stepname}}"
@@ -44,8 +43,8 @@
                 {{step.stepname}}
               </a>
               <div style="margin-right: 5px; margin-left: 5px; padding: 10px;"
-                   class="text-justify shadow-mg p-3 mb-5 bg-white rounded
-                   border-{{ step.classname }} shadow border mx-auto">
+                   class="text-justify bg-white rounded
+                   border-{{ step.classname }} border mx-auto">
                    {% autoescape false %}
                      {{ step.log }}
                    {% endautoescape %}
