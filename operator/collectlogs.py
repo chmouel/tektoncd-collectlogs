@@ -72,5 +72,7 @@ def condition_change(spec, **kwargs):
                 flog = os.path.join(
                     DATADIR, kwargs['name'] + "-" + podname + "-" +
                     container['container'] + ".log")
+                if not cntlog:
+                    cntlog = "No log 🤨"
                 open(flog, 'w').write(cntlog)
     return
