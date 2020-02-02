@@ -2,13 +2,9 @@ import json
 import asyncio
 import os
 import sqlite3
-import sys
 
 import kopf
 import kubernetes.client
-
-sys.path.append(
-    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "common")))
 
 import common
 import db
