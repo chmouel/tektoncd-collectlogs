@@ -16,6 +16,7 @@ import glob
 import json
 import os
 import re
+import sqlite3
 
 import flask
 from dateutil import parser as dtparse
@@ -26,7 +27,34 @@ DATADIR = os.environ.get(
         os.path.join(
             os.path.dirname(os.path.realpath(__file__)), "..", "data")))
 
+DBFILE = os.environ.get(
+    'DBFILE',
+    os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__), "..", "data", "database.sqlite")))
+
 app = flask.Flask(__name__, static_url_path='')
+
+
+def get_db():
+    db = getattr(flask.g, '_database', None)
+
+    def make_dicts(cursor, row):
+        return dict((cursor.description[idx][0], value)
+                    for idx, value in enumerate(row))
+
+    if db is None:
+        db = flask.g._database = sqlite3.connect(DBFILE)
+
+    db.row_factory = make_dicts
+    return db
+
+
+@app.teardown_appcontext
+def close_connection(exception):
+    db = getattr(flask.g, '_database', None)
+    if db is not None:
+        db.close()
 
 
 # TODO: Configurable
@@ -45,23 +73,31 @@ def highlight_log(data):
 
 def build_pipelineruns_status():
     ret = []
-    for log in glob.glob(DATADIR + "/*.json"):
-        j = json.load(open(log))
+    cur = get_db().execute(
+        "SELECT json, pr.name as prname, pr.namespace, p.name as pipelinename "
+        "from PipelineRun as pr, Pipeline as p where pr.pipelineid == p.id "
+        "order by strftime('%s', start_time) desc")
+    rv = cur.fetchall()
 
+    for row in rv:
+        j = json.loads(row['json'])
+        completionTime = 'completionTime' in j and j['completionTime'] or j[
+            'startedAt']
         if j['conditions'][0]['reason'] == 'Succeeded':
             classname = 'success'
         elif j['conditions'][0]['reason'] == 'Failed':
             classname = 'danger'
         else:
             classname = 'info'
-        prname = os.path.basename(log.replace(".json", ""))
         ret.append({
-            'namespace': j['namespace'],
-            'pipelinename': j['pipelineName'],
-            'finishtime': dtparse.parse(j['completionTime']),
+            'namespace': row['namespace'],
+            'pipelinename': row['pipelinename'],
+            'finishtime': dtparse.parse(completionTime),
             'classname': classname,
-            'prname': prname
+            'prname': row['prname']
         })
+
+    cur.close()
     return sorted(ret, key=lambda p: p['finishtime'], reverse=True)
 
 
