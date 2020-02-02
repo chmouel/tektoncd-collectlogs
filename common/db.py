@@ -77,7 +77,7 @@ def insert_if_not_exists(cursor, otype, existence={}, **kwargs):
     query = f" SELECT id FROM {otype} WHERE "
     query += " AND ".join(
         [f"{x}='{kwargs[x]}'" for x in kwargs if x in existence])
-    # print("SELECT QUERY: " + query)
+    print("SELECT QUERY: " + query)
     existID = cursor.execute(query).fetchone()
     if existID:
         return existID[0]

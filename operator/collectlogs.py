@@ -4,14 +4,13 @@ import sqlite3
 import sys
 
 import kopf
-
 import kubernetes.client
 
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "common")))
 
-import db
 import common
+import db
 
 DATADIR = os.environ.get('DATADIR', "./data")
 NAMESPACE = os.environ.get('NAMESPACE', 'collectlogs')
@@ -50,7 +49,10 @@ def condition_change(spec, **kwargs):
     pipelineRunName = kwargs['name']
     namespace = kwargs['namespace']
     start_time = kwargs['status']['startTime']
-    completion_time = kwargs['status']['completionTime']
+    if 'completion_time' in kwargs['status']:
+        completion_time = kwargs['status']['completionTime']
+    else:
+        completion_time = None
     jeez = dict(kwargs['status'])
     jeez['namespace'] = namespace
     jeez['pipelineName'] = pipelineName
