@@ -13,8 +13,10 @@ for ns in ${NS};do
 
     kubectl delete pr --all 2>/dev/null || true
     
-    tkn p -n ${ns} start pipeline-failmixed
-    tkn p -n ${ns} start pipeline-randomwords
+	for i in {1..10};do
+		tkn p -n ${ns} start pipeline-failmixed
+		tkn p -n ${ns} start pipeline-randomwords
+	done
 done
 
     

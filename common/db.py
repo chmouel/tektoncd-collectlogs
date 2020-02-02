@@ -35,7 +35,7 @@ def create_table(cursor):
         namespace text not null,
         start_time text not null,
         status integers(1) not null,
-        completion_time text not null,
+        completion_time text default null,
         pipelineID int not null,
         json text not null,
         UNIQUE(namespace, name, start_time)
@@ -48,12 +48,12 @@ def create_table(cursor):
         name varchar(255) not null,
         namespace text not null,
         start_time text not null,
-        completion_time text not null,
+        completion_time text default null,
         status integers(1) not null,
         podname text not null,
         json text,
         pipelineRunID int not null,
-        UNIQUE(namespace, name, pipelineRunID)
+        UNIQUE(namespace, name, start_time)
     )
     """)
 
@@ -77,16 +77,23 @@ def insert_if_not_exists(cursor, otype, existence={}, **kwargs):
     query = f" SELECT id FROM {otype} WHERE "
     query += " AND ".join(
         [f"{x}='{kwargs[x]}'" for x in kwargs if x in existence])
-    print("SELECT QUERY: " + query)
+    # print(query)
     existID = cursor.execute(query).fetchone()
     if existID:
         return existID[0]
 
-    query = f"insert into {otype} ({', '.join(list(kwargs.keys()))}) VALUES("
-    query += ", ".join([f"'{x}'" for x in kwargs.values()])
+    query = f"INSERT INTO {otype} ({', '.join(list(kwargs.keys()))}) VALUES("
+    query += ", ".join([f"?" for x in kwargs.values()])
     query += ")"
-    print("INSERT QUERY: " + query)
-    return cursor.execute(query).lastrowid
+    # print(
+    #     query,
+    #     tuple(kwargs.values()),
+    # )
+    c = cursor.execute(
+        query,
+        list(kwargs.values()),
+    )
+    return c.lastrowid
 
 
 def test():
@@ -119,7 +126,7 @@ def test():
     taskRunId = insert_if_not_exists(
         cursor,
         "TaskRun",
-        existence=("name", "namespace"),
+        existence=("name", "namespace", "start_time"),
         podname="pod1",
         namespace=namespace,
         name=taskRunName,
@@ -128,6 +135,8 @@ def test():
         status=0,
         pipelineRunID=pipelineRunID,
         json='{}')
+
+    conn.commit()
 
     # SECOND TIME should be different since different start_time
     start_time2 = str(datetime.datetime.now())
