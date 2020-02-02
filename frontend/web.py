@@ -12,7 +12,9 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-import glob
+# NOTE: This still is modeled to the old simple filesystem based pre-DB
+# way... which is not very efficient but still maps it well to DB, will change
+# it when i have the courage.
 import json
 import os
 import re
@@ -74,7 +76,7 @@ def highlight_log(data):
 def build_pipelineruns_status():
     ret = []
     cur = get_db().execute(
-        "SELECT json, pr.name as prname, pr.namespace, p.name as pipelinename "
+        "SELECT pr.id as id, json, pr.name as prname, pr.namespace, p.name as pipelinename "
         "from PipelineRun as pr, Pipeline as p where pr.pipelineid == p.id "
         "order by strftime('%s', start_time) desc")
     rv = cur.fetchall()
@@ -92,6 +94,7 @@ def build_pipelineruns_status():
         ret.append({
             'namespace': row['namespace'],
             'pipelinename': row['pipelinename'],
+            'id': row['id'],
             'finishtime': dtparse.parse(completionTime),
             'classname': classname,
             'prname': row['prname']
@@ -101,12 +104,9 @@ def build_pipelineruns_status():
     return sorted(ret, key=lambda p: p['finishtime'], reverse=True)
 
 
-def steps_status(prun, podName, steps):
+def steps_status(taskrun, namespace, steps):
     ret = []
     for container in steps:
-        logpath = os.path.join(
-            DATADIR,
-            prun + "-" + podName + "-" + container['container'] + ".log")
         # TODO: handle erorr not found
         if 'terminated' in container and container['terminated'][
                 'exitCode'] == 0:
@@ -123,16 +123,17 @@ def steps_status(prun, podName, steps):
             classname = 'warning'
             starttime = None
 
-        if not os.path.exists(logpath):
-            logt = "LOG NOT FOUND"
-        else:
-            logt = highlight_log(open(logpath).read())
+        cur = get_db().execute(
+            "SELECT log from Steps as s, TaskRun as t WHERE s.id == t.id AND t.name==? AND t.namespace==?",
+            (taskrun, namespace))
+        row = cur.fetchone()
+        cur.close()
 
         # TODO: step time
         ret.append({
             'time': starttime,
             'classname': classname,
-            'log': logt,
+            'log': highlight_log(row['log']),
             'stepname': container['name'],
         })
 
@@ -140,12 +141,17 @@ def steps_status(prun, podName, steps):
 
 
 def build_pr_log(pr):
-    fpath = os.path.join(DATADIR, pr + ".json")
-    if not os.path.exists(fpath):
-        return ('%s is not found' % (pr))
+    # TODO: Query TaskRUNS instead
+    cur = get_db().execute(
+        "SELECT pr.id as id, json, pr.name as prname, pr.namespace, p.name as pipelinename "
+        "from PipelineRun as pr, Pipeline as p where pr.pipelineid == p.id and pr.name == ?"
+        "order by strftime('%s', start_time) desc limit 1", (pr, ))
+    row = cur.fetchone()
+    cur.close()
+
     ret = []
-    j = json.load(open(fpath))
-    pr = j['pipelinerunName']
+    j = json.loads(row['json'])
+    pr = row['prname']
     for trn in j['taskRuns']:
         tr = j['taskRuns'][trn]
         if tr['status']['conditions'][0]['reason'] == 'Succeeded':
@@ -173,7 +179,7 @@ def build_pr_log(pr):
             'taskrun':
             trn,
             'steps':
-            steps_status(pr, tr['status']['podName'], tr['status']['steps']),
+            steps_status(trn, row['namespace'], tr['status']['steps']),
         })
 
     return sorted(ret, key=lambda p: p['time'])

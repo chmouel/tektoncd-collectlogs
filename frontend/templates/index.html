@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    
+
     <title>PipelineRun Dashboard!</title>
     <meta name="description" content="PipelineRun Dashboard viewer status">
     <meta name="author" content="Chmouel Boudjah">
@@ -20,14 +20,14 @@
       </a>
       <br/>
       <button style="padding: 10px" class="btn-primary">PipelineRuns Status</button>
-    </p>        
-    
+    </p>
+
     <div  class="container-fluid">
-      
+
       {% for pr in prs %}
       <div class="row">
-        <div class="col-md-3"></div>        
-        <div class="col-md-6 text-left">        
+        <div class="col-md-2"></div>
+        <div class="col-md-8 text-left">
           <small class="text-secondary">
             <b>Pipeline:</b>
             {{ pr.pipelinename }}
@@ -39,24 +39,24 @@
             {{ pr.finishtime.strftime('%Y-%m-%d %H:%M:%S') }}
           </small>
         </div>
-        <div class="col-md-3"></div>        
+        <div class="col-md-2"></div>
       </div>
-      
+
       <div class="row">
-        <div class="col-md-3"></div>
-        <div class="col-md-6 text-center">
+        <div class="col-md-2"></div>
+        <div class="col-md-8 text-center">
           <a href="/log/{{ pr.prname }}"
             class="list-group-item list-group-item-{{ pr.classname }}">
             {{ pr.prname }}
           </a>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
         </div>
       </div>
 
       <br/>
       {% endfor %}
-        
+
     </div>
   </body>
 </html
