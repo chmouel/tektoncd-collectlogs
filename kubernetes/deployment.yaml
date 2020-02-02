@@ -8,6 +8,7 @@ items:
     name: collectlogs
     labels:
       app: collectlogs
+    namespace: %NAMESPACE%
   spec:
     selector:
       matchLabels:
@@ -47,6 +48,7 @@ items:
     labels:
       app: collectlogs
     name: collectlogs
+    namespace: %NAMESPACE%
   spec:
     ports:
     - name: 8080-tcp
