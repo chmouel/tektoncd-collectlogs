@@ -40,6 +40,86 @@ async def startup_fn_simple(logger, **kwargs):
     LOCK = asyncio.Lock()  # in the current asyncio loop
 
 
+def parse_event(kwargs):
+    pipelineName = kwargs['body']['spec']['pipelineRef']['name']
+    pipelineRunName = kwargs['name']
+    namespace = kwargs['namespace']
+    start_time = kwargs['status']['startTime']
+    if 'completion_time' in kwargs['status']:
+        completion_time = kwargs['status']['completionTime']
+    else:
+        completion_time = None
+    jeez = dict(kwargs['status'])
+    jeez['namespace'] = namespace
+    jeez['pipelineName'] = pipelineName
+    jeez['pipelinerunName'] = pipelineRunName
+
+    status = common.statusName("SUCCESS")
+    if kwargs['status']['conditions'][0]['reason'].lower().startswith("fail"):
+        status = common.statusName("FAILURE")
+
+    pipelineID = db.insert_if_not_exists(
+        CURSOR, "Pipeline", name=pipelineName, namespace=namespace)
+    pipelineRunID = db.insert_if_not_exists(
+        CURSOR,
+        "PipelineRun",
+        existence=("name", "namespace", "start_time"),
+        name=pipelineRunName,
+        namespace=namespace,
+        start_time=start_time,
+        completion_time=completion_time,
+        status=status,
+        pipelineID=pipelineID,
+        json=json.dumps(jeez),
+    )
+
+    apiv1 = kubernetes.client.CoreV1Api()
+    prinfo = kwargs['body']
+    for tr in prinfo['status']['taskRuns']:
+        trinfo = prinfo['status']['taskRuns'][tr]
+        trstatus = common.statusName("SUCCESS")
+        if trinfo['status']['conditions'][0]['reason'].lower().startswith(
+                "fail"):
+            trstatus = common.statusName("FAILURE")
+
+        podname = trinfo['status']['podName']
+        if 'completionTime' in trinfo['status']:
+            completionTime = trinfo['status']['completionTime']
+        else:
+            completionTime = None
+        taskRunID = db.insert_if_not_exists(
+            CURSOR,
+            "TaskRun",
+            existence=("name", "namespace", "pipelineRunID"),
+            name=tr,
+            namespace=namespace,
+            start_time=trinfo['status']['startTime'],
+            completion_time=completionTime,
+            podName=podname,
+            status=trstatus,
+            json=json.dumps(trinfo['status']),
+            pipelineRunID=pipelineRunID)
+
+        for container in prinfo['status']['taskRuns'][tr]['status']['steps']:
+            cntlog = apiv1.read_namespaced_pod_log(
+                pretty=True,
+                container=container['container'],
+                name=podname,
+                namespace=kwargs['namespace'])
+
+            db.insert_if_not_exists(
+                CURSOR,
+                "Steps",
+                existence=("name", "namespace", "taskRunID"),
+                name=container['name'],
+                namespace=namespace,
+                taskRunID=taskRunID,
+                log=cntlog,
+            )
+
+    DB_CONN.commit()
+
+
 @kopf.on.field(
     'tekton.dev', 'v1alpha1', 'pipelineruns', field='status.conditions')
 async def condition_change(spec, **kwargs):
@@ -47,82 +127,4 @@ async def condition_change(spec, **kwargs):
         return
 
     async with LOCK:
-        pipelineName = kwargs['body']['spec']['pipelineRef']['name']
-        pipelineRunName = kwargs['name']
-        namespace = kwargs['namespace']
-        start_time = kwargs['status']['startTime']
-        if 'completion_time' in kwargs['status']:
-            completion_time = kwargs['status']['completionTime']
-        else:
-            completion_time = None
-        jeez = dict(kwargs['status'])
-        jeez['namespace'] = namespace
-        jeez['pipelineName'] = pipelineName
-        jeez['pipelinerunName'] = pipelineRunName
-
-        status = common.statusName("SUCCESS")
-        if kwargs['status']['conditions'][0]['reason'].lower().startswith(
-                "fail"):
-            status = common.statusName("FAILURE")
-
-        pipelineID = db.insert_if_not_exists(
-            CURSOR, "Pipeline", name=pipelineName, namespace=namespace)
-        pipelineRunID = db.insert_if_not_exists(
-            CURSOR,
-            "PipelineRun",
-            existence=("name", "namespace", "start_time"),
-            name=pipelineRunName,
-            namespace=namespace,
-            start_time=start_time,
-            completion_time=completion_time,
-            status=status,
-            pipelineID=pipelineID,
-            json=json.dumps(jeez),
-        )
-
-        apiv1 = kubernetes.client.CoreV1Api()
-        prinfo = kwargs['body']
-        for tr in prinfo['status']['taskRuns']:
-            trinfo = prinfo['status']['taskRuns'][tr]
-            trstatus = common.statusName("SUCCESS")
-            if trinfo['status']['conditions'][0]['reason'].lower().startswith(
-                    "fail"):
-                trstatus = common.statusName("FAILURE")
-
-            podname = trinfo['status']['podName']
-            if 'completionTime' in trinfo['status']:
-                completionTime = trinfo['status']['completionTime']
-            else:
-                completionTime = None
-            taskRunID = db.insert_if_not_exists(
-                CURSOR,
-                "TaskRun",
-                existence=("name", "namespace", "pipelineRunID"),
-                name=tr,
-                namespace=namespace,
-                start_time=trinfo['status']['startTime'],
-                completion_time=completionTime,
-                podName=podname,
-                status=trstatus,
-                json=json.dumps(trinfo['status']),
-                pipelineRunID=pipelineRunID)
-
-            for container in prinfo['status']['taskRuns'][tr]['status'][
-                    'steps']:
-                cntlog = apiv1.read_namespaced_pod_log(
-                    pretty=True,
-                    container=container['container'],
-                    name=podname,
-                    namespace=kwargs['namespace'])
-
-                db.insert_if_not_exists(
-                    CURSOR,
-                    "Steps",
-                    existence=("name", "namespace", "taskRunID"),
-                    name=container['name'],
-                    namespace=namespace,
-                    taskRunID=taskRunID,
-                    log=cntlog,
-                )
-
-        DB_CONN.commit()
+        parse_event(kwargs)
