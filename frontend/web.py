@@ -145,6 +145,8 @@ def build_pr_log(pr):
         "order by strftime('%s', start_time) desc limit 1", (pr, ))
     row = cur.fetchone()
     cur.close()
+    if not row:
+        flask.abort(404)
 
     ret = []
     j = json.loads(row['json'])
