@@ -8,6 +8,18 @@
     <meta name="description" content="Showing PipelienRun stesp and failure">
     <meta name="author" content="Chmouel Boudjah">
 
+    <style>
+     a.deco-none {
+       color:#000000 !important;
+       text-decoration:none;
+
+     }
+
+     .clickable {
+       cursor:pointer;
+     }
+    </style>
+
     <link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
 
@@ -31,12 +43,11 @@
 
       <div style="margin-right: 5px; margin-left: 5px; padding: 10px;"
         class="text-justify bg-white rounded border mx-auto">
-
-        <div style="width:100%" class="text-center">
-          <a class="btn" id="{{tr.taskrun}}" href="#{{tr.taskrun}}">
+        <p class="clickable">
+          <a class="deco-none" id="{{tr.taskrun}}" href="#{{tr.taskrun}}">
             <b>{{ tr.emoji }} Taskrun</b>: {{tr.taskrun}}
           </a>
-        </div>
+        </p>
 
         {% for step in tr.steps %}
         <a id="{{tr.taskrun}}-{{step.stepname}}"
