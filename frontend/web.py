@@ -29,11 +29,8 @@ DATADIR = os.environ.get(
         os.path.join(
             os.path.dirname(os.path.realpath(__file__)), "..", "data")))
 
-DBFILE = os.environ.get(
-    'DBFILE',
-    os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__), "..", "data", "database.sqlite")))
+DATABASE_FILE = os.environ.get(
+    'DATABASE_FILE', os.path.abspath(os.path.join(DATADIR, "database.sqlite")))
 
 app = flask.Flask(__name__, static_url_path='')
 
@@ -46,7 +43,7 @@ def get_db():
                     for idx, value in enumerate(row))
 
     if db is None:
-        db = flask.g._database = sqlite3.connect(DBFILE)
+        db = flask.g._database = sqlite3.connect(DATABASE_FILE)
 
     db.row_factory = make_dicts
     return db
