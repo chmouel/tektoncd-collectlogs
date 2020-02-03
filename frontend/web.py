@@ -73,8 +73,9 @@ def highlight_log(data):
 def build_pipelineruns_status():
     ret = []
     cur = get_db().execute(
-        "SELECT pr.id as id, json, pr.name as prname, pr.namespace, p.name as pipelinename "
-        "from PipelineRun as pr, Pipeline as p where pr.pipelineid == p.id "
+        "SELECT pr.id as id, json, pr.name as prname, pr.namespace, "
+        "p.name as pipelinename from PipelineRun as pr, "
+        "Pipeline as p where pr.pipelineid == p.id "
         "order by strftime('%s', start_time) desc")
     rv = cur.fetchall()
 
@@ -101,9 +102,17 @@ def build_pipelineruns_status():
     return sorted(ret, key=lambda p: p['finishtime'], reverse=True)
 
 
-def steps_status(taskrun, namespace, steps):
+def steps_status(taskrunID, jeez):
     ret = []
-    for container in steps:
+    query = "SELECT name, log FROM Steps WHERE taskrunID==?"
+    cur = get_db().execute(query, (taskrunID, ))
+    rows = cur.fetchall()
+    cur.close()
+    for row in rows:
+        # We need to store the status in table and be done with this
+        for x in jeez['steps']:
+            if x['name'] == row['name']:
+                container = x
         # TODO: handle erorr not found
         if 'terminated' in container and container['terminated'][
                 'exitCode'] == 0:
@@ -120,65 +129,58 @@ def steps_status(taskrun, namespace, steps):
             classname = 'warning'
             starttime = None
 
-        cur = get_db().execute(
-            "SELECT log from Steps as s, TaskRun as t WHERE s.id == t.id AND t.name==? AND t.namespace==?",
-            (taskrun, namespace))
-        row = cur.fetchone()
-        cur.close()
-
         # TODO: step time
         ret.append({
             'time': starttime,
             'classname': classname,
             'log': highlight_log(row['log']),
-            'stepname': container['name'],
+            'stepname': row['name'],
         })
 
     return sorted(ret, key=lambda p: p['time'])
 
 
-def build_pr_log(pr):
-    # TODO: Query TaskRUNS instead
-    cur = get_db().execute(
-        "SELECT pr.id as id, json, pr.name as prname, pr.namespace, p.name as pipelinename "
-        "from PipelineRun as pr, Pipeline as p where pr.pipelineid == p.id and pr.name == ?"
-        "order by strftime('%s', start_time) desc limit 1", (pr, ))
-    row = cur.fetchone()
+def build_pr_log(pr_name):
+    pr_id = flask.request.args.get('id')
+    if not pr_id:
+        cur = get_db().execute(
+            "SELECT id FROM PipelineRun WHERE name==? LIMIT 1", (pr_name, ))
+        pr_id = cur.fetchone()
+        if not pr_id:
+            flask.abort(404)
+        pr_id = pr_id['id']
+        cur.close()
+
+    query = "SELECT status, json, completion_time, start_time, name, id " \
+        "FROM Taskrun WHERE pipelineRunID==?"
+    cur = get_db().execute(query, (pr_id, ))
+    rows = cur.fetchall()
     cur.close()
-    if not row:
+
+    if not rows:
         flask.abort(404)
 
     ret = []
-    j = json.loads(row['json'])
-    pr = row['prname']
-    for trn in j['taskRuns']:
-        tr = j['taskRuns'][trn]
-        if tr['status']['conditions'][0]['reason'] == 'Succeeded':
+    for row in rows:
+        if row['status'] == 0:
             emoji = '🤙'
-        elif tr['status']['conditions'][0]['reason'] == 'Failed':
+        elif row['status'] == 1:
             emoji = '🚫'
-        elif j['conditions'][0]['status'] == "False" and tr['status'][
-                'conditions'][0]['reason'] == 'Running':
+        elif row['status'] == 2:
             emoji = '🤷'
         else:
             emoji = '🤔'
 
-        if 'completionTime' in tr['status']:
-            time = tr['status']['completionTime']
-        elif 'startTime' in tr['status']:
-            time = tr['status']['startTime']
+        if row['completion_time']:
+            time = row['completion_time']
         else:
-            time = None
+            time = row['start_time']
 
         ret.append({
-            'time':
-            time,
-            'emoji':
-            emoji,
-            'taskrun':
-            trn,
-            'steps':
-            steps_status(trn, row['namespace'], tr['status']['steps']),
+            'time': time,
+            'emoji': emoji,
+            'taskrun': row['name'],
+            'steps': steps_status(row['id'], json.loads(row['json'])),
         })
 
     return sorted(ret, key=lambda p: p['time'])
