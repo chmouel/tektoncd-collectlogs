@@ -81,8 +81,6 @@ def build_pipelineruns_status():
 
     for row in rv:
         j = json.loads(row['json'])
-        completionTime = 'completionTime' in j and j['completionTime'] or j[
-            'startedAt']
         if j['conditions'][0]['reason'] == 'Succeeded':
             classname = 'success'
         elif j['conditions'][0]['reason'] == 'Failed':
@@ -93,13 +91,13 @@ def build_pipelineruns_status():
             'namespace': row['namespace'],
             'pipelinename': row['pipelinename'],
             'id': row['id'],
-            'finishtime': dtparse.parse(completionTime),
+            'starttime': dtparse.parse(j['startTime']),
             'classname': classname,
             'prname': row['prname']
         })
 
     cur.close()
-    return sorted(ret, key=lambda p: p['finishtime'], reverse=True)
+    return sorted(ret, key=lambda p: p['starttime'], reverse=True)
 
 
 def steps_status(taskrunID, jeez):
