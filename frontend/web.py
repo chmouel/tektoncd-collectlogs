@@ -21,6 +21,7 @@ import re
 import sqlite3
 
 import flask
+import humanfriendly
 from dateutil import parser as dtparse
 
 DATADIR = os.environ.get(
@@ -87,13 +88,26 @@ def build_pipelineruns_status():
             classname = 'danger'
         else:
             classname = 'info'
+        tooltip = f"""
+        Status: {j['conditions'][0]['reason']}
+        Reason: {j['conditions'][0]['message']}
+        StartTime: {j['startTime']}
+        """
+        if 'completionTime' in j:
+            elapsed = humanfriendly.format_timespan(
+                dtparse.parse(j['completionTime']) -
+                dtparse.parse(j['startTime']))
+            tooltip += f"""CompletionTime: {j['completionTime']}
+        ElapsedTime: {elapsed}"""
+
         ret.append({
             'namespace': row['namespace'],
             'pipelinename': row['pipelinename'],
             'id': row['id'],
             'starttime': dtparse.parse(j['startTime']),
             'classname': classname,
-            'prname': row['prname']
+            'prname': row['prname'],
+            'tooltip': tooltip
         })
 
     cur.close()

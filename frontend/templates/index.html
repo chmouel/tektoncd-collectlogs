@@ -25,7 +25,8 @@
     <div  class="container-fluid">
 
       {% for pr in prs %}
-      <div class="row">
+      <div  data-toggle="tooltip" data-html="true" title="{{pr.tooltip}}">
+        <div class="row">
         <div class="col-md-2"></div>
         <div class="col-md-8 text-left">
           <small class="text-secondary">
@@ -55,6 +56,7 @@
       </div>
 
       <br/>
+      </div>
       {% endfor %}
 
     </div>
