@@ -1,18 +1,18 @@
-import json
 import asyncio
+import json
 import os
 import sqlite3
 
 import kopf
-import kubernetes.client
 
 import common
 import db
+import kubernetes.client
 
 DATADIR = os.environ.get('DATADIR', "./data")
 NAMESPACE = os.environ.get('NAMESPACE', 'collectlogs')
-DBFILE = os.environ.get(
-    'DBFILE',
+DATABASE_FILE = os.environ.get(
+    'DATABASE_FILE',
     os.path.abspath(
         os.path.join(
             os.path.dirname(__file__), "..", "data", "database.sqlite")))
@@ -24,9 +24,7 @@ else:
 
 LOCK: asyncio.Lock  # requires a loop on creation
 
-DB_CONN = sqlite3.connect(DBFILE, check_same_thread=False)
-CURSOR = DB_CONN.cursor()
-db.create_table(CURSOR)
+DB_CONN = sqlite3.connect(DATABASE_FILE, check_same_thread=False)
 
 
 @kopf.on.startup()
@@ -34,6 +32,9 @@ async def startup_fn_simple(logger, **kwargs):
     logger.info("Initialising the task-lock...")
     global LOCK
     LOCK = asyncio.Lock()  # in the current asyncio loop
+    cursor = DB_CONN.cursor()
+    db.create_table(cursor)
+    cursor.close()
 
 
 def parse_event(kwargs):
@@ -54,10 +55,11 @@ def parse_event(kwargs):
     if kwargs['status']['conditions'][0]['reason'].lower().startswith("fail"):
         status = common.statusName("FAILURE")
 
+    cursor = DB_CONN.cursor()
     pipelineID = db.insert_if_not_exists(
-        CURSOR, "Pipeline", name=pipelineName, namespace=namespace)
+        cursor, "Pipeline", name=pipelineName, namespace=namespace)
     pipelineRunID = db.insert_if_not_exists(
-        CURSOR,
+        cursor,
         "PipelineRun",
         existence=("name", "namespace", "start_time"),
         name=pipelineRunName,
@@ -84,7 +86,7 @@ def parse_event(kwargs):
         else:
             completionTime = None
         taskRunID = db.insert_if_not_exists(
-            CURSOR,
+            cursor,
             "TaskRun",
             existence=("name", "namespace", "pipelineRunID"),
             name=tr,
@@ -104,7 +106,7 @@ def parse_event(kwargs):
                 namespace=kwargs['namespace'])
 
             db.insert_if_not_exists(
-                CURSOR,
+                cursor,
                 "Steps",
                 existence=("name", "namespace", "taskRunID"),
                 name=container['name'],
@@ -114,6 +116,7 @@ def parse_event(kwargs):
             )
 
     DB_CONN.commit()
+    cursor.close()
 
 
 @kopf.on.field(
