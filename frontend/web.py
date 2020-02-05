@@ -129,17 +129,21 @@ def steps_status(taskrunID, jeez):
         if 'terminated' in container and container['terminated'][
                 'exitCode'] == 0:
             classname = 'success'
+            starttime = dtparse.parse(container['terminated']['startedAt'])
         elif 'terminated' in container and container['terminated'][
-                'exitCode'] == 1:
+                'exitCode'] > 0:
             classname = 'danger'
+            starttime = dtparse.parse(container['terminated']['startedAt'])
         elif 'running' in container:
+            starttime = dtparse.parse(container['running']['startedAt'])
             classname = 'secondary'
         else:
             classname = 'warning'
+            starttime = None
 
         # TODO: step time
         ret.append({
-            'time': dtparse.parse(container['running']['startedAt']),
+            'time': starttime,
             'classname': classname,
             'log': highlight_log(row['log']),
             'stepname': row['name'],
