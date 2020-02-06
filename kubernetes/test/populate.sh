@@ -6,8 +6,8 @@ NS="foo bar blahblah"
 
 
 for ns in ${NS};do
-	kubectl delete pr --all || true
-	kubectl delete tr --all || true
+	kubectl delete -n ${ns} pr --all || true
+	kubectl delete -n ${ns} tr --all || true
     kubectl create ns ${ns} 2>/dev/null || true
     
 	for i in pipelinerun taskrrun task ;do
@@ -19,7 +19,7 @@ for ns in ${NS};do
 
     kubectl delete pr --all 2>/dev/null || true
     
-	for i in {1..2};do
+	for i in {1..20};do
 		tkn p -n ${ns} start pipeline-failmixed
 		tkn p -n ${ns} start pipeline-randomwords
 	done

@@ -1,3 +1,4 @@
+SQLAlchemy
 flask
 gunicorn
 python-dateutil

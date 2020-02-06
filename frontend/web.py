@@ -75,8 +75,8 @@ def build_pipelineruns_status():
     ret = []
     cur = get_db().execute(
         "SELECT pr.id as id, json, pr.name as prname, pr.namespace, "
-        "p.name as pipelinename from PipelineRun as pr, "
-        "Pipeline as p where pr.pipelineid == p.id "
+        "p.name as pipelinename from pipelineruns as pr, "
+        "pipelines as p where pr.pipeline_id == p.id "
         "order by strftime('%s', start_time) desc")
     rv = cur.fetchall()
 
@@ -116,7 +116,8 @@ def build_pipelineruns_status():
 
 def steps_status(taskrunID, jeez):
     ret = []
-    query = "SELECT name, log FROM Steps WHERE taskrunID==?"
+    print(taskrunID)
+    query = "SELECT name, log FROM steps WHERE taskrun_id==?"
     cur = get_db().execute(query, (taskrunID, ))
     rows = cur.fetchall()
     cur.close()
@@ -156,7 +157,7 @@ def build_pr_log(pr_name):
     pr_id = flask.request.args.get('id')
     if not pr_id:
         cur = get_db().execute(
-            "SELECT id FROM PipelineRun WHERE name==? LIMIT 1", (pr_name, ))
+            "SELECT id FROM pipelineruns WHERE name==? LIMIT 1", (pr_name, ))
         pr_id = cur.fetchone()
         if not pr_id:
             flask.abort(404)
@@ -164,7 +165,7 @@ def build_pr_log(pr_name):
         cur.close()
 
     query = "SELECT status, json, completion_time, start_time, name, id " \
-        "FROM Taskrun WHERE pipelineRunID==?"
+        "FROM taskruns WHERE pipelinerun_id==?"
     cur = get_db().execute(query, (pr_id, ))
     rows = cur.fetchall()
     cur.close()

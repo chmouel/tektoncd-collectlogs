@@ -1,13 +1,15 @@
 import asyncio
 import json
 import os
-import sqlite3
 
 import kopf
+import kubernetes.client
+import sqlalchemy
+from dateutil import parser as dtparse
+from sqlalchemy.orm import sessionmaker
 
 import common
 import db
-import kubernetes.client
 
 DATADIR = os.environ.get('DATADIR', "./data")
 NAMESPACE = os.environ.get('NAMESPACE', 'collectlogs')
@@ -24,7 +26,10 @@ else:
 
 LOCK: asyncio.Lock  # requires a loop on creation
 
-DB_CONN = sqlite3.connect(DATABASE_FILE, check_same_thread=False)
+Engine = sqlalchemy.create_engine(
+    'sqlite:////' + DATABASE_FILE, echo="DEBUG" in os.environ)
+Session = sessionmaker(bind=Engine)
+db.Base.metadata.create_all(Engine)
 
 
 @kopf.on.startup()
@@ -32,12 +37,11 @@ async def startup_fn_simple(logger, **kwargs):
     logger.info("Initialising the task-lock...")
     global LOCK
     LOCK = asyncio.Lock()  # in the current asyncio loop
-    cursor = DB_CONN.cursor()
-    db.create_table(cursor)
-    cursor.close()
 
 
 def parse_event(kwargs):
+    session = Session()
+
     pipelineName = kwargs['body']['spec']['pipelineRef']['name']
     pipelineRunName = kwargs['name']
     namespace = kwargs['namespace']
@@ -55,19 +59,18 @@ def parse_event(kwargs):
     if kwargs['status']['conditions'][0]['reason'].lower().startswith("fail"):
         status = common.statusName("FAILURE")
 
-    cursor = DB_CONN.cursor()
-    pipelineID = db.insert_if_not_exists(
-        cursor, "Pipeline", name=pipelineName, namespace=namespace)
-    pipelineRunID = db.insert_if_not_exists(
-        cursor,
-        "PipelineRun",
-        existence=("name", "namespace", "start_time"),
+    pipeline = db.get_or_create(
+        session, db.Pipeline, name=pipelineName, namespace=namespace)
+
+    pipelinerun = db.get_or_create(
+        session,
+        db.Pipelinerun,
         name=pipelineRunName,
         namespace=namespace,
-        start_time=start_time,
-        completion_time=completion_time,
+        start_time=dtparse.parse(start_time),
+        completion_time=completion_time and dtparse.parse(completion_time),
         status=status,
-        pipelineID=pipelineID,
+        pipeline_id=pipeline.id,
         json=json.dumps(jeez),
     )
 
@@ -82,21 +85,22 @@ def parse_event(kwargs):
 
         podname = trinfo['status']['podName']
         if 'completionTime' in trinfo['status']:
-            completionTime = trinfo['status']['completionTime']
+            completionTime = dtparse.parse(trinfo['status']['completionTime'])
         else:
             completionTime = None
-        taskRunID = db.insert_if_not_exists(
-            cursor,
-            "TaskRun",
-            existence=("name", "namespace", "pipelineRunID"),
+
+        taskrun = db.get_or_create(
+            session,
+            db.Taskrun,
             name=tr,
             namespace=namespace,
-            start_time=trinfo['status']['startTime'],
+            start_time=dtparse.parse(trinfo['status']['startTime']),
             completion_time=completionTime,
-            podName=podname,
+            pod_name=podname,
             status=trstatus,
             json=json.dumps(trinfo['status']),
-            pipelineRunID=pipelineRunID)
+            pipelinerun_id=pipelinerun.id)
+        taskrun_id = taskrun.id
 
         for container in prinfo['status']['taskRuns'][tr]['status']['steps']:
             cntlog = apiv1.read_namespaced_pod_log(
@@ -105,18 +109,14 @@ def parse_event(kwargs):
                 name=podname,
                 namespace=kwargs['namespace'])
 
-            db.insert_if_not_exists(
-                cursor,
-                "Steps",
-                existence=("name", "namespace", "taskRunID"),
+            db.get_or_create(
+                session,
+                db.Step,
                 name=container['name'],
                 namespace=namespace,
-                taskRunID=taskRunID,
+                taskrun_id=taskrun_id,
                 log=cntlog,
             )
-
-    DB_CONN.commit()
-    cursor.close()
 
 
 @kopf.on.field(

@@ -12,165 +12,71 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+import sqlalchemy as sqla
+from sqlalchemy.ext.declarative import declarative_base
 
-import datetime
-import os
-import sqlite3
-
-
-def create_table(cursor):
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS Pipeline (
-        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-        name text not null,
-        namespace text not null,
-        UNIQUE(namespace, name)
-    )
-    """)
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS PipelineRun (
-        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-        name text not null,
-        namespace text not null,
-        start_time text not null,
-        status integers(1) not null,
-        completion_time text default null,
-        pipelineID int not null,
-        json text not null,
-        UNIQUE(namespace, name, start_time)
-    )
-    """)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS TaskRun (
-        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-        name varchar(255) not null,
-        namespace text not null,
-        start_time text not null,
-        completion_time text default null,
-        status integers(1) not null,
-        podname text not null,
-        json text,
-        pipelineRunID int not null,
-        UNIQUE(namespace, name, start_time)
-    )
-    """)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS Steps (
-       id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-        name varchar(255) not null,
-        namespace text not null,
-        taskRunId int not null,
-        log blob,
-        UNIQUE(namespace, name, taskRunId)
-    )
-    """)
+Base = declarative_base()
 
 
-def insert_if_not_exists(cursor, otype, existence={}, **kwargs):
-    """Will insert a bunch of fields in a table {otype} if existence fields
-    don't duplicate already"""
-    if not existence:
-        existence = kwargs.keys()
-    query = f" SELECT id FROM {otype} WHERE "
-    query += " AND ".join(
-        [f"{x}='{kwargs[x]}'" for x in kwargs if x in existence])
-    # print(query)
-    existID = cursor.execute(query).fetchone()
-    if existID:
-        return existID[0]
-
-    query = f"INSERT INTO {otype} ({', '.join(list(kwargs.keys()))}) VALUES("
-    query += ", ".join([f"?" for x in kwargs.values()])
-    query += ")"
-    # print(
-    #     query,
-    #     tuple(kwargs.values()),
-    # )
-    c = cursor.execute(
-        query,
-        list(kwargs.values()),
-    )
-    return c.lastrowid
+class Pipeline(Base):
+    __tablename__ = 'pipelines'
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    name = sqla.Column(sqla.String)
+    namespace = sqla.Column(sqla.String)
+    sqla.UniqueConstraint('name', 'namespace')
 
 
-def test():
-    os.remove("/tmp/test.db")
-    conn = sqlite3.connect("/tmp/test.db")
-    create_table(conn)
-    cursor = conn.cursor()
-
-    namespace = 'play'
-    pipelineName = 'pipeline-randomwords'
-    pipelineRunName = 'pipeline-randomwords-run-vxw5w'
-    taskRunName = 'pipeline-randomwords-run-vxw5w-baconipsum-1-skgdx'
-
-    insert_if_not_exists(
-        cursor, "Pipeline", name=pipelineName, namespace=namespace)
-    pipelineID = cursor.lastrowid
-
-    insert_if_not_exists(
-        cursor,
-        "PipelineRun",
-        name=pipelineRunName,
-        namespace=namespace,
-        start_time=str(datetime.datetime.now()),
-        completion_time=str(datetime.datetime.now()),
-        status=0,
-        pipelineID=pipelineID,
-        json='{}')
-    pipelineRunID = cursor.lastrowid
-
-    taskRunId = insert_if_not_exists(
-        cursor,
-        "TaskRun",
-        existence=("name", "namespace", "start_time"),
-        podname="pod1",
-        namespace=namespace,
-        name=taskRunName,
-        start_time=str(datetime.datetime.now()),
-        completion_time=str(datetime.datetime.now()),
-        status=0,
-        pipelineRunID=pipelineRunID,
-        json='{}')
-
-    conn.commit()
-
-    # SECOND TIME should be different since different start_time
-    start_time2 = str(datetime.datetime.now())
-    taskRunId2 = insert_if_not_exists(
-        cursor,
-        "TaskRun",
-        existence=("name", "namespace", "start_time"),
-        namespace=namespace,
-        name=taskRunName,
-        podname="pod2",
-        start_time=start_time2,
-        completion_time=str(datetime.datetime.now()),
-        status=0,
-        pipelineRunID=pipelineRunID,
-        json='{}')
-    assert (taskRunId != taskRunId2)
-
-    # Third time same ID since same start_time, name, namespace
-    taskRunId3 = insert_if_not_exists(
-        cursor,
-        "TaskRun",
-        existence=("name", "namespace", "start_time"),
-        namespace=namespace,
-        podname="pod2",
-        name=taskRunName,
-        start_time=start_time2,
-        completion_time=str(datetime.datetime.now()),
-        status=0,
-        pipelineRunID=pipelineRunID,
-        json='{}')
-    assert (taskRunId2 == taskRunId3)
-    conn.commit()
-    conn.close()
+class Pipelinerun(Base):
+    __tablename__ = 'pipelineruns'
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    name = sqla.Column(sqla.String, nullable=False)
+    namespace = sqla.Column(sqla.String, nullable=False)
+    start_time = sqla.Column(sqla.DateTime(), nullable=False)
+    completion_time = sqla.Column(sqla.DateTime(), nullable=True)
+    status = sqla.Column(sqla.SmallInteger(), nullable=False)
+    json = sqla.Column(sqla.Text(), nullable=False)
+    pipeline_id = sqla.Column(
+        sqla.Integer, sqla.ForeignKey('pipelines.id'), nullable=False)
+    sqla.UniqueConstraint('name', 'namespace', 'start_time')
 
 
-if __name__ == '__main__':
-    test()
+class Taskrun(Base):
+    __tablename__ = 'taskruns'
+    __existence__ = ("name", "namespace", "start_time")
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    name = sqla.Column(sqla.String, nullable=False)
+    namespace = sqla.Column(sqla.String, nullable=False)
+    start_time = sqla.Column(sqla.DateTime(), nullable=False)
+    completion_time = sqla.Column(sqla.DateTime(), nullable=True)
+    status = sqla.Column(sqla.SmallInteger(), nullable=False)
+    pod_name = sqla.Column(sqla.String, nullable=False)
+    json = sqla.Column(sqla.Text(), nullable=False)
+    pipelinerun_id = sqla.Column(
+        sqla.Integer, sqla.ForeignKey('pipelineruns.id'), nullable=False)
+    sqla.UniqueConstraint('name', 'namespace', 'start_time')
+
+
+class Step(Base):
+    __tablename__ = "steps"
+    __existence__ = ("name", "namespace", "taskrun_id")
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    name = sqla.Column(sqla.String, nullable=False)
+    namespace = sqla.Column(sqla.String, nullable=False)
+    taskrun_id = sqla.Column(
+        sqla.Integer, sqla.ForeignKey('taskruns.id'), nullable=False)
+    log = sqla.Column(sqla.Text)
+
+
+def get_or_create(session, model, **kwargs):
+    if hasattr(model, '__existence__'):
+        filter_by = {x: kwargs[x] for x in kwargs if x in model.__existence__}
+    else:
+        filter_by = kwargs
+    instance = session.query(model).filter_by(**filter_by).first()
+    if instance:
+        return instance
+    else:
+        instance = model(**kwargs)
+        session.add(instance)
+        session.commit()
+        return instance

@@ -1,74 +1,76 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>PipelineRun: {{pr}}</title>
-    <meta name="description" content="Showing PipelienRun stesp and failure">
-    <meta name="author" content="Chmouel Boudjah">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <style>
-     a.deco-none {
-       color:#000000 !important;
-       text-decoration:none;
+  <title>PipelineRun: {{pr}}</title>
+  <meta name="description" content="Showing PipelienRun stesp and failure">
+  <meta name="author" content="Chmouel Boudjah">
 
-     }
+  <style>
+    a.deco-none {
+      color: #000000 !important;
+      text-decoration: none;
 
-     .clickable {
-       cursor:pointer;
-     }
-    </style>
+    }
 
-    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
-    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    .clickable {
+      cursor: pointer;
+    }
+  </style>
 
-  </head>
+  <link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+  <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+
+</head>
 
 
-  <body>
+<body>
 
-    <div class="container-fluid">
+  <div class="container-fluid">
 
-      <div class="text-center">
-        <a href="/">
-          <img src="{{ url_for('static', filename='img/tekton.png')}}" width="120" height="80" class="img-fluid rounded" alt="TektonCD Logo">
+    <div class="text-center">
+      <a href="/">
+        <img src="{{ url_for('static', filename='img/tekton.png')}}" width="120" height="80" class="img-fluid rounded"
+          alt="TektonCD Logo">
+      </a>
+      <br />
+      <button style="padding: 10px" class="btn-primary">PipelineRun: {{pr}}</button>
+    </div>
+    <br />
+
+    {% for tr in prlog %}
+
+    <div style="margin-right: 5px; margin-left: 5px; padding: 10px;"
+      class="text-justify bg-white rounded border mx-auto">
+      <p class="clickable">
+        <a class="deco-none" id="{{tr.taskrun}}" href="#{{tr.taskrun}}">
+          <span class="text-secondary"> <b>Taskrun</b>: {{tr.taskrun}}</span>
         </a>
-        <br/>
-        <button style="padding: 10px" class="btn-primary">PipelineRun: {{pr}}</button>
-      </div>
-      <br/>
+      </p>
 
-      {% for tr in prlog %}
-
-      <div style="margin-right: 5px; margin-left: 5px; padding: 10px;"
-        class="text-justify bg-white rounded border mx-auto">
-        <p class="clickable">
-          <a class="deco-none" id="{{tr.taskrun}}" href="#{{tr.taskrun}}">
-            <span class="text-secondary"> <b>Taskrun</b>: {{tr.taskrun}}</span>
-          </a>
-        </p>
-
-        {% for step in tr.steps %}
-        <a id="{{tr.taskrun}}-{{step.stepname}}"
-          href="#{{tr.taskrun}}-{{step.stepname}}" class="btn btn-{{step.classname}}">
-          {{step.stepname}}
-        </a>
-        <div style="margin-right: 5px; margin-left: 5px; padding: 10px;"
-          class="text-justify bg-white rounded
+      {% for step in tr.steps %}
+      <a id="{{tr.taskrun}}-{{step.stepname}}" href="#{{tr.taskrun}}-{{step.stepname}}"
+        class="btn btn-{{step.classname}}">
+        {{step.stepname}}
+      </a>
+      <div style="margin-right: 5px; margin-left: 5px; padding: 10px;" class="text-justify bg-white rounded
                     border-{{ step.classname }} border mx-auto">
-          {% autoescape false %}
-          {{ step.log }}
-          {% endautoescape %}
-        </div>
-        <br/>
-        {% endfor %}
+        {% autoescape false %}
+        {{ step.log }}
+        {% endautoescape %}
       </div>
-
-      <br/>
+      <br />
       {% endfor %}
-
     </div>
 
-  </body>
+    <br />
+    {% endfor %}
+
+  </div>
+
+</body>
+
 </html
