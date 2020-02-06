@@ -36,12 +36,10 @@ items:
           volumeMounts:
           - mountPath: /data
             name: data
-#        - image: quay.io/openshift/origin-cli:latest
-#          name: cli
-#          command: ['sleep', 'infinity']
         volumes:
-        - emptyDir: {}
-          name: data
+        - name: data
+          persistentVolumeClaim:
+            claimName: ci-openshift-pipelines-collectlog-database
 - apiVersion: v1
   kind: Service
   metadata:
