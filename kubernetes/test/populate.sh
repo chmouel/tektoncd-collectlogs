@@ -6,6 +6,8 @@ NS="foo bar blahblah"
 
 
 for ns in ${NS};do
+	kubectl delete pr --all || true
+	kubectl delete tr --all || true
     kubectl create ns ${ns} 2>/dev/null || true
     
 	for i in pipelinerun taskrrun task ;do
