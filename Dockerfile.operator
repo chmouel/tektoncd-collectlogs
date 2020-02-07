@@ -5,6 +5,7 @@ RUN mkdir -p /data
 RUN pip3 install  --no-cache-dir -r /src/requirements.txt
 ADD run-operator.sh /usr/local/bin
 
-ENV DATADIR /data
+ENV DATADIR=/data
+
 WORKDIR /src/operator
 CMD /usr/local/bin/run-operator.sh

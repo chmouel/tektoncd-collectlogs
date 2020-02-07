@@ -11,13 +11,11 @@ from sqlalchemy.orm import sessionmaker
 import common
 import db
 
-DATADIR = os.environ.get('DATADIR', "./data")
 NAMESPACE = os.environ.get('NAMESPACE', 'collectlogs')
+DATADIR = os.environ.get('DATADIR', "./data")
 DATABASE_FILE = os.environ.get(
-    'DATABASE_FILE',
-    os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__), "..", "data", "database.sqlite")))
+    'DATABASE_FILE', os.path.abspath(os.path.join(DATADIR, "database.sqlite")))
+
 if os.environ.get("KUBECONFIG"):
     kubernetes.config.load_kube_config(
         config_file=os.environ.get("KUBECONFIG"))
