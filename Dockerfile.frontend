@@ -2,7 +2,7 @@ FROM python:3.7
 
 ADD frontend /src/frontend
 RUN mkdir -p /data
-RUN pip3 install  --no-cache-dir -r /src/frontend/requirements.txt
+RUN pip3 install  --no-cache-dir -r /src/requirements.txt
 
 EXPOSE 8080
 WORKDIR /src/frontend

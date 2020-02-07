@@ -3,3 +3,5 @@ flask
 gunicorn
 python-dateutil
 humanfriendly
+kopf
+kubernetes
