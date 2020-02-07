@@ -1,14 +1,10 @@
 FROM python:3.7
 
-ADD operator /src/
-
-
+ADD . /src
+RUN mkdir -p /data
+RUN pip3 install  --no-cache-dir -r /src/requirements.txt
 ADD run-operator.sh /usr/local/bin
 
-RUN mkdir -p /data
-
 ENV DATADIR /data
-
-RUN pip3 install  --no-cache-dir -r /src/requirements.txt
-
+WORKDIR /src/operator
 CMD /usr/local/bin/run-operator.sh

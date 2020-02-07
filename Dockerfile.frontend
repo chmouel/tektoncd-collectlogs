@@ -1,12 +1,10 @@
 FROM python:3.7
 
-ADD frontend /src/frontend
+ADD . /src
 RUN mkdir -p /data
 RUN pip3 install  --no-cache-dir -r /src/requirements.txt
 
-EXPOSE 8080
 WORKDIR /src/frontend
 ENV DATADIR=/data FLASK_APP=web
-
+EXPOSE 8080
 CMD gunicorn -b :8080 web:app --access-logfile -
-
