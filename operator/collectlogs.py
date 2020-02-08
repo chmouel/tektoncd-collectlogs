@@ -76,6 +76,7 @@ def parse_event(kwargs):
     for tr in prinfo['status']['taskRuns']:
         trinfo = prinfo['status']['taskRuns'][tr]
         trstatus = common.statusName("SUCCESS")
+        trname = trinfo['pipelineTaskName']
         if trinfo['status']['conditions'][0]['reason'].lower().startswith(
                 "fail"):
             trstatus = common.statusName("FAILURE")
@@ -89,7 +90,7 @@ def parse_event(kwargs):
         taskrun = db.get_or_create(
             session,
             db.Taskruns,
-            name=tr,
+            name=trname,
             namespace=namespace,
             start_time=dtparse.parse(trinfo['status']['startTime']),
             completion_time=completionTime,
