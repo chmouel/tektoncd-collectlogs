@@ -46,20 +46,21 @@
       {% for tr in prlog %}
 
       <div style="margin-right: 5px; margin-left: 5px; padding: 10px;"
-        class="container_fluid text-right rounded border mx-auto"  id="{{tr.taskrun}}">
+        class="container_fluid text-right rounded mx-auto"  id="{{tr.taskrun}}">
 
         <div class="bg-light row">
-          <div class="col-md-1 text-sm-left">
-            <span data-toggle="collapse" data-target="#log-{{tr.taskrun}}" class="btn btn-{{tr.classname}}"><small>{{tr.status}}</small></span>
-          </div>
-
-          <div class="col-md-7 text-sm-center">
+          <div class="col-md-5 text-sm-left">
             <button class="btn btn-light clickable" data-toggle="collapse" data-target="#log-{{tr.taskrun}}">
               <small>
                 <b>Taskrun:</b> {{tr.taskrun}}
               </small>
             </button>
           </div>
+
+          <div class="col-md-3 text-sm-left">
+            <span data-toggle="collapse" data-target="#log-{{tr.taskrun}}" class="btn btn-{{tr.classname}}"><small>{{tr.status}}</small></span>
+          </div>
+
           <div class="col-md-4 text-sm-right">
             <i class="small">
               <b>Started:</b> {{ tr.start_time.strftime('%Y-%m-%d %H:%M:%S') }}UTC
@@ -99,8 +100,6 @@
           <br/>
           {% endfor %}
         </div>
-        <br />
-
       </div>
 
       <br />
