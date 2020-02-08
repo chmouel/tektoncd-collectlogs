@@ -45,9 +45,8 @@
     {% for tr in prlog %}
 
     <div style="margin-right: 5px; margin-left: 5px; padding: 10px;"
-      class="text-right rounded border mx-auto">
+      class="container_fluid text-right rounded border mx-auto">
 
-      <div class="container_fluid">
         <div class="row">
           <div class="col-md-8 text-left clickable">
             <a class="mb-2 bg-secondary text-light" style="padding: 5px;" id="{{tr.taskrun}}" href="#{{tr.taskrun}}">
@@ -59,30 +58,36 @@
             <b>Elapsed:</b> {{ tr.elapsed }}
           </div>
         </div>
-      </div>
+
 
       <hr>
 
       {% for step in tr.steps %}
-      <div class="container-fluid">
+      <div id="{{tr.taskrun}}-{{step.stepname}}" class="container-fluid">
         <div class="row">
-          <b>Step: </b>&nbsp;
-          <a id="{{tr.taskrun}}-{{step.stepname}}" href="#{{tr.taskrun}}-{{step.stepname}}"
-            class="text-{{step.classname}}">
-            {{step.stepname}}
-          </a>
+          <div class="col-md-12 text-left clickable">
+            <b>Step: </b>&nbsp;
+            <a  href="#{{tr.taskrun}}-{{step.stepname}}"
+              class="text-{{step.classname}}">
+              {{step.stepname}}
+            </a>
+          </div>
         </div>
-      </div>
-      <div id="log-{{tr.taskrun}}-{{step.stepname}}"
-        style="margin-right: 5px; margin-left: 5px; padding: 10px;"
-        class="text-justify bg-white rounded
-               border-{{ step.classname }} border mx-auto">
-        {% autoescape false %}
-        {{ step.log }}
-        {% endautoescape %}
+
+        <div class="row">
+          <div id="log-{{tr.taskrun}}-{{step.stepname}}"
+            style="margin-right: 5px; margin-left: 5px; padding: 10px;"
+            class="col-md-12 text-justify bg-white rounded
+                   border-{{ step.classname }} border mx-auto">
+            {% autoescape false %}
+            {{ step.log }}
+            {% endautoescape %}
+          </div>
+        </div>
       </div>
       <br />
       {% endfor %}
+
     </div>
 
     <br />
