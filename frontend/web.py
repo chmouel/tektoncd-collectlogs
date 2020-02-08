@@ -154,13 +154,17 @@ def build_pr_log(pr_name):
     for task in taskruns:
         elapsed = ""
         if task.status == common.statusName("SUCCESS"):
-            emoji = '🤙'
+            status = 'SUCCESS'
+            classname = 'success'
         elif task.status == common.statusName("FAILURE"):
-            emoji = '🚫'
-        elif task.status == common.statusName("UNKNOWN"):
-            emoji = '🤷'
+            status = 'FAILURE'
+            classname = 'danger'
+        elif task.status == common.statusName("WAITING"):
+            status = "WAIT"
+            classname = 'secondary'
         else:
-            emoji = '🤔'
+            status = "UNKNOWN"
+            classname = 'warning'
 
         if task.completion_time:
             time = task.completion_time
@@ -174,7 +178,8 @@ def build_pr_log(pr_name):
             'time': time,
             'elapsed': elapsed,
             'start_time': task.start_time,
-            'emoji': emoji,
+            'classname': classname,
+            'status': status,
             'taskrun': task.name,
             'steps': steps_status(task.id, json.loads(task.json)),
         })

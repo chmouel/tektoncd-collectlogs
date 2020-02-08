@@ -48,16 +48,16 @@
       <div style="margin-right: 5px; margin-left: 5px; padding: 10px;"
         class="container_fluid text-right rounded border mx-auto"  id="{{tr.taskrun}}">
 
-        <div class="row">
+        <div class="bg-light row">
           <div class="col-md-1 text-sm-left">
-            <a alt="Permalink" href="#{{tr.taskrun}}" >
-              <i class="material-icons">link</i>
-            </a>
+            <span data-toggle="collapse" data-target="#log-{{tr.taskrun}}" class="btn btn-{{tr.classname}}"><small>{{tr.status}}</small></span>
           </div>
 
           <div class="col-md-7 text-sm-center">
-            <button data-toggle="collapse" data-target="#log-{{tr.taskrun}}" style="padding: 5px;" class="btn btn-light">
-              <b>Taskrun:</b> {{tr.taskrun}}
+            <button class="btn btn-light clickable" data-toggle="collapse" data-target="#log-{{tr.taskrun}}">
+              <small>
+                <b>Taskrun:</b> {{tr.taskrun}}
+              </small>
             </button>
           </div>
           <div class="col-md-4 text-sm-right">
@@ -69,7 +69,7 @@
         </div>
 
 
-        <div class="show" id="log-{{tr.taskrun}}">
+        <div class="collapse" id="log-{{tr.taskrun}}">
           <hr>
           {% for step in tr.steps %}
           <div class="container-fluid">
