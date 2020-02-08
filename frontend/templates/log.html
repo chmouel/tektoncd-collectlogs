@@ -39,7 +39,7 @@
             alt="TektonCD Logo">
         </a>
         <br />
-        <button style="padding: 10px" class="btn-primary">PipelineRun: {{pr}}</button>
+        <span style="padding: 10px" class="btn-primary"> PipelineRun: {{pr}}</span>
       </div>
       <br />
 
@@ -49,28 +49,21 @@
         class="container_fluid text-right rounded mx-auto"  id="{{tr.taskrun}}">
 
         <div class="bg-light row">
-          <div class="col-md-5 text-sm-left">
-            <button class="btn btn-light clickable" data-toggle="collapse" data-target="#log-{{tr.taskrun}}">
-              <small>
-                <b>Taskrun:</b> {{tr.taskrun}}
-              </small>
-            </button>
+          <div class="col-sm-2"></div>
+          <div data-toggle="collapse" data-target="#log-{{tr.taskrun}}" class="col-sm-8 text-sm-center btn btn-{{tr.classname}}">
+            <a class="text-white" href="#"><b>{{tr.taskrun}}</b></a>
           </div>
+          <div class="col-sm-2"></div>
+        </div>
 
-          <div class="col-md-3 text-sm-left">
-            <span data-toggle="collapse" data-target="#log-{{tr.taskrun}}" class="btn btn-{{tr.classname}}"><small>{{tr.status}}</small></span>
-          </div>
 
-          <div class="col-md-4 text-sm-right">
+        <div class="collapse" id="log-{{tr.taskrun}}">
+          <div class="col-sm-12 text-sm-center">
             <i class="small">
               <b>Started:</b> {{ tr.start_time.strftime('%Y-%m-%d %H:%M:%S') }}UTC
               <b>Elapsed:</b> {{ tr.elapsed }}
             </i>
           </div>
-        </div>
-
-
-        <div class="collapse" id="log-{{tr.taskrun}}">
           <hr>
           {% for step in tr.steps %}
           <div class="container-fluid">
@@ -102,7 +95,6 @@
         </div>
       </div>
 
-      <br />
       {% endfor %}
 
     </div>
