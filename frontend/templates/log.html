@@ -50,10 +50,11 @@
 
         <div class="row">
           <div class="col-md-6 text-left clickable" >
-            <a href="#{{tr.taskrun}}"
-              <i class="material-icons">link</i>
+            <a class="deco-none" data-toggle="collapse" data-target="#log-{{tr.taskrun}}" href="#">
+              <i class="material-icons">keyboard_hide</i>
             </a>
-            <a data-toggle="collapse" data-target="#log-{{tr.taskrun}}" style="padding: 5px;" class="btn-light">
+
+            <a href="#{{tr.taskrun}}" style="padding: 5px;" class="btn-light">
               <b>Taskrun:</b> {{tr.taskrun}}
             </a>
           </div>
@@ -67,23 +68,27 @@
         <div class="show" id="log-{{tr.taskrun}}">
           <hr>
           {% for step in tr.steps %}
-          <div id="{{tr.taskrun}}-{{step.stepname}}" class="container-fluid">
+          <div class="container-fluid">
             <div class="row">
               <div class="col-md-11 text-left">
-                <b>Step: </b>&nbsp;
-                <span class="text-{{step.classname}}">{{step.stepname}}</span>
+                <b>Step:</b>&nbsp;
+                <span class="clickable text-{{step.classname}}">{{step.stepname}}</span>
               </div>
               <div class="col-md-1 text-right">
                   <a href="#{{tr.taskrun}}-{{step.stepname}}">
                     <i class="material-icons">link</i>
                   </a>
+                  <a data-toggle="collapse" data-target="#{{tr.taskrun}}-{{step.stepname}}" href="#{{tr.taskrun}}-{{step.stepname}}">
+                    <i class="material-icons">keyboard_hide</i>
+                  </a>
+
               </div>
             </div>
 
             <div class="row">
-              <div id="log-{{tr.taskrun}}-{{step.stepname}}"
+              <div id="{{tr.taskrun}}-{{step.stepname}}"
                 style="margin-right: 5px; margin-left: 5px; padding: 10px;"
-                class="col-md-12 text-justify bg-white rounded
+                class="show col-md-12 text-justify bg-white rounded
                        border-{{ step.classname }} border mx-auto">
                 {% autoescape false %}
                 {{ step.log }}
