@@ -1,100 +1,108 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>PipelineRun: {{pr}}</title>
-  <meta name="description" content="Showing PipelienRun stesp and failure">
-  <meta name="author" content="Chmouel Boudjah">
+    <title>PipelineRun: {{pr}}</title>
+    <meta name="description" content="Showing PipelienRun stesp and failure">
+    <meta name="author" content="Chmouel Boudjah">
 
-  <style>
-   a.deco-none {
-     color: #000000 !important;
-     text-decoration: none;
+    <style>
+     a.deco-none {
+       color: #000000 !important;
+       text-decoration: none;
 
-   }
+     }
 
-   .clickable {
-     cursor: pointer;
-   }
-  </style>
+     .clickable {
+       cursor: pointer;
+     }
+    </style>
 
-  <link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
-  <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
 
-</head>
+  </head>
 
 
-<body>
+  <body>
 
-  <div class="container-fluid">
+    <div class="container-fluid">
 
-    <div class="text-center">
-      <a href="/">
-        <img src="{{ url_for('static', filename='img/tekton.png')}}" width="120" height="80" class="img-fluid rounded"
-          alt="TektonCD Logo">
-      </a>
+      <div class="text-center">
+        <a href="/">
+          <img src="{{ url_for('static', filename='img/tekton.png')}}" width="120" height="80" class="img-fluid rounded"
+            alt="TektonCD Logo">
+        </a>
+        <br />
+        <button style="padding: 10px" class="btn-primary">PipelineRun: {{pr}}</button>
+      </div>
       <br />
-      <button style="padding: 10px" class="btn-primary">PipelineRun: {{pr}}</button>
-    </div>
-    <br />
 
-    {% for tr in prlog %}
+      {% for tr in prlog %}
 
-    <div style="margin-right: 5px; margin-left: 5px; padding: 10px;"
-      class="container_fluid text-right rounded border mx-auto">
+      <div style="margin-right: 5px; margin-left: 5px; padding: 10px;"
+        class="container_fluid text-right rounded border mx-auto"  id="{{tr.taskrun}}">
 
         <div class="row">
-          <div class="col-md-8 text-left clickable">
-            <a class="mb-2 bg-secondary text-light" style="padding: 5px;" id="{{tr.taskrun}}" href="#{{tr.taskrun}}">
-              <b>Taskrun</b>: {{tr.taskrun}}
+          <div class="col-md-6 text-left clickable" >
+            <a href="#{{tr.taskrun}}"
+              <i class="material-icons">link</i>
+            </a>
+            <a data-toggle="collapse" data-target="#log-{{tr.taskrun}}" style="padding: 5px;" class="btn-light">
+              <b>Taskrun:</b> {{tr.taskrun}}
             </a>
           </div>
-          <div class="col-md-4 text-right">
+          <div class="col-md-6 text-right">
             <b>Started:</b> {{ tr.start_time.strftime('%Y-%m-%d %H:%M:%S') }}
             <b>Elapsed:</b> {{ tr.elapsed }}
           </div>
         </div>
 
 
-      <hr>
+        <div class="show" id="log-{{tr.taskrun}}">
+          <hr>
+          {% for step in tr.steps %}
+          <div id="{{tr.taskrun}}-{{step.stepname}}" class="container-fluid">
+            <div class="row">
+              <div class="col-md-11 text-left">
+                <b>Step: </b>&nbsp;
+                <span class="text-{{step.classname}}">{{step.stepname}}</span>
+              </div>
+              <div class="col-md-1 text-right">
+                  <a href="#{{tr.taskrun}}-{{step.stepname}}">
+                    <i class="material-icons">link</i>
+                  </a>
+              </div>
+            </div>
 
-      {% for step in tr.steps %}
-      <div id="{{tr.taskrun}}-{{step.stepname}}" class="container-fluid">
-        <div class="row">
-          <div class="col-md-12 text-left clickable">
-            <b>Step: </b>&nbsp;
-            <a  href="#{{tr.taskrun}}-{{step.stepname}}"
-              class="text-{{step.classname}}">
-              {{step.stepname}}
-            </a>
+            <div class="row">
+              <div id="log-{{tr.taskrun}}-{{step.stepname}}"
+                style="margin-right: 5px; margin-left: 5px; padding: 10px;"
+                class="col-md-12 text-justify bg-white rounded
+                       border-{{ step.classname }} border mx-auto">
+                {% autoescape false %}
+                {{ step.log }}
+                {% endautoescape %}
+              </div>
+            </div>
           </div>
+          <br/>
+          {% endfor %}
         </div>
+        <br />
 
-        <div class="row">
-          <div id="log-{{tr.taskrun}}-{{step.stepname}}"
-            style="margin-right: 5px; margin-left: 5px; padding: 10px;"
-            class="col-md-12 text-justify bg-white rounded
-                   border-{{ step.classname }} border mx-auto">
-            {% autoescape false %}
-            {{ step.log }}
-            {% endautoescape %}
-          </div>
-        </div>
       </div>
+
       <br />
       {% endfor %}
 
     </div>
 
-    <br />
-    {% endfor %}
+  </body>
 
-  </div>
-
-</body>
-
-</html
+</html>
