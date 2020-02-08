@@ -49,18 +49,18 @@
         class="container_fluid text-right rounded border mx-auto"  id="{{tr.taskrun}}">
 
         <div class="row">
-          <div class="col-md-2 text-left">
+          <div class="col-md-1 text-sm-left">
             <a alt="Permalink" href="#{{tr.taskrun}}" >
               <i class="material-icons">link</i>
             </a>
           </div>
 
-          <div class="col-md-5 text-center">
+          <div class="col-md-7 text-sm-center">
             <button data-toggle="collapse" data-target="#log-{{tr.taskrun}}" style="padding: 5px;" class="btn btn-light">
               <b>Taskrun:</b> {{tr.taskrun}}
             </button>
           </div>
-          <div class="col-md-5 text-sm-right">
+          <div class="col-md-4 text-sm-right">
             <i class="small">
               <b>Started:</b> {{ tr.start_time.strftime('%Y-%m-%d %H:%M:%S') }}
               <b>Elapsed:</b> {{ tr.elapsed }}
