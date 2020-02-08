@@ -1,15 +1,17 @@
 import asyncio
 import json
 import os
+import sys
 
 import kopf
 import kubernetes.client
-import sqlalchemy
 from dateutil import parser as dtparse
-from sqlalchemy.orm import sessionmaker
 
-import common
-import db
+sys.path.append(
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "common")))
+
+import common  # noqa: E402
+import db  # noqa: E402
 
 NAMESPACE = os.environ.get('NAMESPACE', 'collectlogs')
 DATADIR = os.environ.get('DATADIR', "./data")
@@ -24,10 +26,7 @@ else:
 
 LOCK: asyncio.Lock  # requires a loop on creation
 
-Engine = sqlalchemy.create_engine(
-    'sqlite:////' + DATABASE_FILE, echo="DEBUG" in os.environ)
-Session = sessionmaker(bind=Engine)
-db.Base.metadata.create_all(Engine)
+Engine, Session = db.start_engine(DATABASE_FILE)
 
 
 @kopf.on.startup()
@@ -58,11 +57,11 @@ def parse_event(kwargs):
         status = common.statusName("FAILURE")
 
     pipeline = db.get_or_create(
-        session, db.Pipeline, name=pipelineName, namespace=namespace)
+        session, db.Pipelines, name=pipelineName, namespace=namespace)
 
     pipelinerun = db.get_or_create(
         session,
-        db.Pipelinerun,
+        db.Pipelineruns,
         name=pipelineRunName,
         namespace=namespace,
         start_time=dtparse.parse(start_time),
@@ -89,7 +88,7 @@ def parse_event(kwargs):
 
         taskrun = db.get_or_create(
             session,
-            db.Taskrun,
+            db.Taskruns,
             name=tr,
             namespace=namespace,
             start_time=dtparse.parse(trinfo['status']['startTime']),
@@ -109,7 +108,7 @@ def parse_event(kwargs):
 
             db.get_or_create(
                 session,
-                db.Step,
+                db.Steps,
                 name=container['name'],
                 namespace=namespace,
                 taskrun_id=taskrun_id,
