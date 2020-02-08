@@ -10,18 +10,19 @@
   <meta name="author" content="Chmouel Boudjah">
 
   <style>
-    a.deco-none {
-      color: #000000 !important;
-      text-decoration: none;
+   a.deco-none {
+     color: #000000 !important;
+     text-decoration: none;
 
-    }
+   }
 
-    .clickable {
-      cursor: pointer;
-    }
+   .clickable {
+     cursor: pointer;
+   }
   </style>
 
   <link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+  <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
 
 </head>
@@ -44,20 +45,38 @@
     {% for tr in prlog %}
 
     <div style="margin-right: 5px; margin-left: 5px; padding: 10px;"
-      class="text-justify bg-white rounded border mx-auto">
-      <p class="clickable">
-        <a class="deco-none" id="{{tr.taskrun}}" href="#{{tr.taskrun}}">
-          <span class="text-secondary"> <b>Taskrun</b>: {{tr.taskrun}}</span>
-        </a>
-      </p>
+      class="text-right rounded border mx-auto">
+
+      <div class="container_fluid">
+        <div class="row">
+          <div class="col-md-8 text-left clickable">
+            <a class="mb-2 bg-secondary text-light" style="padding: 5px;" id="{{tr.taskrun}}" href="#{{tr.taskrun}}">
+              <b>Taskrun</b>: {{tr.taskrun}}
+            </a>
+          </div>
+          <div class="col-md-4 text-right">
+            <b>Started:</b> {{ tr.start_time.strftime('%Y-%m-%d %H:%M:%S') }}
+            <b>Elapsed:</b> {{ tr.elapsed }}
+          </div>
+        </div>
+      </div>
+
+      <hr>
 
       {% for step in tr.steps %}
-      <a id="{{tr.taskrun}}-{{step.stepname}}" href="#{{tr.taskrun}}-{{step.stepname}}"
-        class="btn btn-{{step.classname}}">
-        {{step.stepname}}
-      </a>
-      <div style="margin-right: 5px; margin-left: 5px; padding: 10px;" class="text-justify bg-white rounded
-                    border-{{ step.classname }} border mx-auto">
+      <div class="container-fluid">
+        <div class="row">
+          <b>Step: </b>&nbsp;
+          <a id="{{tr.taskrun}}-{{step.stepname}}" href="#{{tr.taskrun}}-{{step.stepname}}"
+            class="text-{{step.classname}}">
+            {{step.stepname}}
+          </a>
+        </div>
+      </div>
+      <div id="log-{{tr.taskrun}}-{{step.stepname}}"
+        style="margin-right: 5px; margin-left: 5px; padding: 10px;"
+        class="text-justify bg-white rounded
+               border-{{ step.classname }} border mx-auto">
         {% autoescape false %}
         {{ step.log }}
         {% endautoescape %}

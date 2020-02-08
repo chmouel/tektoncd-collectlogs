@@ -152,6 +152,7 @@ def build_pr_log(pr_name):
 
     ret = []
     for task in taskruns:
+        elapsed = ""
         if task.status == common.statusName("SUCCESS"):
             emoji = '🤙'
         elif task.status == common.statusName("FAILURE"):
@@ -166,8 +167,13 @@ def build_pr_log(pr_name):
         else:
             time = task.start_time
 
+        if task.completion_time:
+            elapsed = humanfriendly.format_timespan(task.completion_time -
+                                                    task.start_time)
         ret.append({
             'time': time,
+            'elapsed': elapsed,
+            'start_time': task.start_time,
             'emoji': emoji,
             'taskrun': task.name,
             'steps': steps_status(task.id, json.loads(task.json)),
