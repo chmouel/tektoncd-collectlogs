@@ -18,11 +18,17 @@
 import json
 import os
 import re
-import sqlite3
+import sys
 
 import flask
 import humanfriendly
 from dateutil import parser as dtparse
+
+sys.path.append(
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "common")))
+
+import db as dbcommon  # noqa: E402
+import common  # noqa: E402
 
 DATADIR = os.environ.get(
     'DATADIR',
@@ -34,27 +40,7 @@ DATABASE_FILE = os.environ.get(
     'DATABASE_FILE', os.path.abspath(os.path.join(DATADIR, "database.sqlite")))
 
 app = flask.Flask(__name__, static_url_path='')
-
-
-def get_db():
-    db = getattr(flask.g, '_database', None)
-
-    def make_dicts(cursor, row):
-        return dict((cursor.description[idx][0], value)
-                    for idx, value in enumerate(row))
-
-    if db is None:
-        db = flask.g._database = sqlite3.connect(DATABASE_FILE)
-
-    db.row_factory = make_dicts
-    return db
-
-
-@app.teardown_appcontext
-def close_connection(exception):
-    db = getattr(flask.g, '_database', None)
-    if db is not None:
-        db.close()
+Engine, Session = dbcommon.start_engine(DATABASE_FILE)
 
 
 # TODO: Configurable
@@ -73,15 +59,12 @@ def highlight_log(data):
 
 def build_pipelineruns_status():
     ret = []
-    cur = get_db().execute(
-        "SELECT pr.id as id, json, pr.name as prname, pr.namespace, "
-        "p.name as pipelinename from pipelineruns as pr, "
-        "pipelines as p where pr.pipeline_id == p.id "
-        "order by strftime('%s', start_time) desc")
-    rv = cur.fetchall()
+    pipelineruns = flask.g.session.query(dbcommon.Pipelineruns,
+                                         dbcommon.Pipelines).join(
+                                             dbcommon.Pipelines).all()
 
-    for row in rv:
-        j = json.loads(row['json'])
+    for pipelinerun, pipeline in pipelineruns:
+        j = json.loads(pipelinerun.json)
         if j['conditions'][0]['reason'] == 'Succeeded':
             classname = 'success'
         elif j['conditions'][0]['reason'] == 'Failed':
@@ -101,38 +84,36 @@ def build_pipelineruns_status():
         ElapsedTime: {elapsed}"""
 
         ret.append({
-            'namespace': row['namespace'],
-            'pipelinename': row['pipelinename'],
-            'id': row['id'],
-            'starttime': dtparse.parse(j['startTime']),
+            'namespace': pipelinerun.namespace,
+            'pipelinename': pipeline.name,
+            'id': pipelinerun.id,
+            'starttime': pipelinerun.start_time,
             'classname': classname,
-            'prname': row['prname'],
+            'prname': pipelinerun.name,
             'tooltip': tooltip
         })
 
-    cur.close()
     return sorted(ret, key=lambda p: p['starttime'], reverse=True)
 
 
-def steps_status(taskrunID, jeez):
+def steps_status(taskrun_id, jeez):
     ret = []
-    print(taskrunID)
-    query = "SELECT name, log FROM steps WHERE taskrun_id==?"
-    cur = get_db().execute(query, (taskrunID, ))
-    rows = cur.fetchall()
-    cur.close()
-    for row in rows:
-        # We need to store the status in table and be done with this
+    steps = flask.g.session.query(
+        dbcommon.Steps).filter(dbcommon.Steps.taskrun_id == taskrun_id).all()
+
+    for step in steps:
+        # Using the json which me no like we need to store the status in table
+        # and be done with this, until then doing that stupid thing
         for x in jeez['steps']:
-            if x['name'] == row['name']:
+            if x['name'] == step.name:
                 container = x
         # TODO: handle erorr not found
         if 'terminated' in container and container['terminated'][
-                'exitCode'] == 0:
+                'exitCode'] == common.statusName("SUCCESS"):
             classname = 'success'
             starttime = dtparse.parse(container['terminated']['startedAt'])
         elif 'terminated' in container and container['terminated'][
-                'exitCode'] > 0:
+                'exitCode'] > common.statusName("SUCCESS"):
             classname = 'danger'
             starttime = dtparse.parse(container['terminated']['startedAt'])
         elif 'running' in container:
@@ -146,8 +127,8 @@ def steps_status(taskrunID, jeez):
         ret.append({
             'time': starttime,
             'classname': classname,
-            'log': highlight_log(row['log']),
-            'stepname': row['name'],
+            'log': highlight_log(step.log),
+            'stepname': step.name,
         })
 
     return sorted(ret, key=lambda p: p['time'])
@@ -156,47 +137,53 @@ def steps_status(taskrunID, jeez):
 def build_pr_log(pr_name):
     pr_id = flask.request.args.get('id')
     if not pr_id:
-        cur = get_db().execute(
-            "SELECT id FROM pipelineruns WHERE name==? LIMIT 1", (pr_name, ))
-        pr_id = cur.fetchone()
-        if not pr_id:
+        filter_by = (dbcommon.Pipelineruns.name == pr_name)
+        pr = flask.g.session.query(
+            dbcommon.Pipelineruns).filter(filter_by).first()
+        if not pr:
             flask.abort(404)
-        pr_id = pr_id['id']
-        cur.close()
+        pr_id = pr.id
 
-    query = "SELECT status, json, completion_time, start_time, name, id " \
-        "FROM taskruns WHERE pipelinerun_id==?"
-    cur = get_db().execute(query, (pr_id, ))
-    rows = cur.fetchall()
-    cur.close()
+    taskruns = flask.g.session.query(dbcommon.Taskruns).filter(
+        dbcommon.Taskruns.pipelinerun_id == pr_id).all()
 
-    if not rows:
+    if not taskruns:
         flask.abort(404)
 
     ret = []
-    for row in rows:
-        if row['status'] == 0:
+    for task in taskruns:
+        if task.status == common.statusName("SUCCESS"):
             emoji = '🤙'
-        elif row['status'] == 1:
+        elif task.status == common.statusName("FAILURE"):
             emoji = '🚫'
-        elif row['status'] == 2:
+        elif task.status == common.statusName("UNKNOWN"):
             emoji = '🤷'
         else:
             emoji = '🤔'
 
-        if row['completion_time']:
-            time = row['completion_time']
+        if task.completion_time:
+            time = task.completion_time
         else:
-            time = row['start_time']
+            time = task.start_time
 
         ret.append({
             'time': time,
             'emoji': emoji,
-            'taskrun': row['name'],
-            'steps': steps_status(row['id'], json.loads(row['json'])),
+            'taskrun': task.name,
+            'steps': steps_status(task.id, json.loads(task.json)),
         })
 
     return sorted(ret, key=lambda p: p['time'])
+
+
+@app.before_request
+def create_session():
+    flask.g.session = Session()
+
+
+@app.teardown_appcontext
+def shutdown_session(response_or_exc):
+    flask.g.session.commit()
 
 
 @app.route('/log/<pr>')
