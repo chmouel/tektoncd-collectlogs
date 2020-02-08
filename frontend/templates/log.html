@@ -49,18 +49,22 @@
         class="container_fluid text-right rounded border mx-auto"  id="{{tr.taskrun}}">
 
         <div class="row">
-          <div class="col-md-6 text-left clickable" >
-            <a class="deco-none" data-toggle="collapse" data-target="#log-{{tr.taskrun}}" href="#">
-              <i class="material-icons">keyboard_hide</i>
-            </a>
-
-            <a href="#{{tr.taskrun}}" style="padding: 5px;" class="btn-light">
-              <b>Taskrun:</b> {{tr.taskrun}}
+          <div class="col-md-2 text-left">
+            <a alt="Permalink" href="#{{tr.taskrun}}" >
+              <i class="material-icons">link</i>
             </a>
           </div>
-          <div class="col-md-6 text-right">
-            <b>Started:</b> {{ tr.start_time.strftime('%Y-%m-%d %H:%M:%S') }}
-            <b>Elapsed:</b> {{ tr.elapsed }}
+
+          <div class="col-md-5 text-center">
+            <button data-toggle="collapse" data-target="#log-{{tr.taskrun}}" style="padding: 5px;" class="btn btn-light">
+              <b>Taskrun:</b> {{tr.taskrun}}
+            </button>
+          </div>
+          <div class="col-md-5 text-sm-right">
+            <i class="small">
+              <b>Started:</b> {{ tr.start_time.strftime('%Y-%m-%d %H:%M:%S') }}
+              <b>Elapsed:</b> {{ tr.elapsed }}
+            </i>
           </div>
         </div>
 
@@ -71,17 +75,13 @@
           <div class="container-fluid">
             <div class="row">
               <div class="col-md-11 text-left">
-                <b>Step:</b>&nbsp;
-                <span class="clickable text-{{step.classname}}">{{step.stepname}}</span>
+                <b class="text-{{step.classname}}">Step:</b>
+                <button data-toggle="collapse" data-target="#{{tr.taskrun}}-{{step.stepname}}" class="clickable btn btn-light">{{step.stepname}}</button>
               </div>
               <div class="col-md-1 text-right">
-                  <a href="#{{tr.taskrun}}-{{step.stepname}}">
-                    <i class="material-icons">link</i>
-                  </a>
-                  <a data-toggle="collapse" data-target="#{{tr.taskrun}}-{{step.stepname}}" href="#{{tr.taskrun}}-{{step.stepname}}">
-                    <i class="material-icons">keyboard_hide</i>
-                  </a>
-
+                <a alt="Permalink" href="#{{tr.taskrun}}-{{step.stepname}}">
+                  <i class="material-icons">link</i>
+                </a>
               </div>
             </div>
 
