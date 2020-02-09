@@ -1,11 +1,15 @@
 import asyncio
+import http.client
 import json
 import os
 import sys
+import ssl
+import urllib.parse
 
 import kopf
-import kubernetes.client
 from dateutil import parser as dtparse
+
+import kubernetes.client
 
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "common")))
@@ -13,6 +17,7 @@ sys.path.append(
 import common  # noqa: E402
 import db  # noqa: E402
 
+TRIGGERS_URL = os.environ.get('TRIGGERS_URL')
 NAMESPACE = os.environ.get('NAMESPACE', 'collectlogs')
 DATADIR = os.environ.get('DATADIR', "./data")
 DATABASE_FILE = os.environ.get(
@@ -36,7 +41,7 @@ async def startup_fn_simple(logger, **kwargs):
     LOCK = asyncio.Lock()  # in the current asyncio loop
 
 
-def parse_event(kwargs):
+def store_pipelinerun(kwargs):
     session = Session()
 
     pipelineName = kwargs['body']['spec']['pipelineRef']['name']
@@ -117,6 +122,28 @@ def parse_event(kwargs):
             )
 
 
+def send_triggers(jeez):
+    u = urllib.parse.urlparse(TRIGGERS_URL)
+    conn = http.client.HTTPSConnection(
+        u.netloc,
+        context="TRIGGERS_URL_SELF_SIGNED" in os.environ
+        and ssl._create_unverified_context() or None)
+    conn.request(
+        "POST",
+        u.path,
+        body=json.dumps(jeez),
+        headers={
+            "User-Agent": "Tekton Collectlogs your friendly neighbour",
+        })
+    resp = conn.getresponse()
+    # json.dump(jeez, open("/tmp/dump.json", 'w'))
+    if not str(resp.status).startswith("2"):
+        print("Error: %d" % (resp.status))
+        print(resp.read())
+    else:
+        print(f"Webhook result has been posted to {TRIGGERS_URL}")
+
+
 @kopf.on.field(
     'tekton.dev', 'v1alpha1', 'pipelineruns', field='status.conditions')
 async def condition_change(spec, **kwargs):
@@ -124,4 +151,6 @@ async def condition_change(spec, **kwargs):
         return
 
     async with LOCK:
-        parse_event(kwargs)
+        store_pipelinerun(kwargs)
+        if TRIGGERS_URL:
+            send_triggers(dict(kwargs['body']))
