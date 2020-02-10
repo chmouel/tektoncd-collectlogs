@@ -16,16 +16,8 @@ rules:
     resources: [pipelineruns]
     verbs: [list, watch, patch, get]
 
-  - apiGroups: [events.k8s.io]
-    resources: [events]
-    verbs: [create]
-
   - apiGroups: [""]
-    resources: [events]
-    verbs: [create]
-
-  - apiGroups: [""]
-    resources: ["pods", "pods/log"]
+    resources: ["pods", "pods/log", "events"]
     verbs: ["get", "list"]
 
 ---
