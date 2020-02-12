@@ -1,5 +1,6 @@
 REPO=quay.io/chmouel
 NAMESPACE := tekton-pipelines
+TRIGGERS_URL := $(shell [[ -e .triggers-url ]] && cat .triggers-url)
 
 all: build push
 
@@ -28,6 +29,8 @@ redeploy-scoped:
 		kubectl delete -f <(sed "s/%NAMESPACE%/$$namespace/" kubernetes/deployment.yaml kubernetes/sa-scoped.yaml) 2>/dev/null || true && \
 		kubectl create -f <(sed "s/%NAMESPACE%/$$namespace/" kubernetes/deployment.yaml kubernetes/sa-scoped.yaml) && \
 		kubectl set env deployment/collectlogs -c operator TARGET_NAMESPACE="$$namespace" && \
+		[[ "X$(TRIGGERS-URL)" != X ]] && \
+			kubectl set env deployment/collectlogs -c operator TRIGGERS_URL=$(TRIGGERS_URL) && \
 		kubect get route 2> /dev/null  >/dev/null || true && \
 		kubectl delete -f <(sed "s/%NAMESPACE%/$$namespace/" kubernetes/openshift-route.yaml) 2>/dev/null || true && \
 		kubectl --validate=false create -f <(sed "s/%NAMESPACE%/$$namespace/" kubernetes/openshift-route.yaml)
